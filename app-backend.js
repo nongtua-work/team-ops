@@ -19,10 +19,17 @@
     if (!hasLiff || typeof liff === 'undefined') return;
     await liff.init({ liffId: cfg.LIFF_ID });
     state.liffReady = true;
+    // Only auto-redirect to LINE login when running inside the LINE in-app
+    // browser. On regular desktop / mobile browsers, browse as guest — the
+    // user can call window.BACKEND.signIn() explicitly when they want to
+    // authenticate (e.g. from a "Sign in with LINE" button).
     if (!liff.isLoggedIn()) {
-      // Will redirect away — no point continuing this turn.
-      liff.login();
-      return new Promise(() => {});
+      if (liff.isInClient && liff.isInClient()) {
+        liff.login();
+        return new Promise(() => {}); // about to redirect
+      }
+      console.info('[TC] LIFF ready, not logged in (guest mode). Call BACKEND.signIn() to authenticate.');
+      return;
     }
     state.profile = await liff.getProfile();
     // Patch the current-user card so the UI greets the real LINE user.
@@ -92,6 +99,11 @@
       try { await initLiff(); } catch (err) { console.warn('[TC] LIFF init failed:', err); }
       try { await hydrate(); } catch (err) { console.warn('[TC] initial sync failed:', err); }
       startPolling();
+      console.info('[TC] backend ready', { liff: state.liffReady, profile: !!state.profile, lastSync: state.lastSync });
+    },
+    // Explicit LINE login — call from a button. No-op when LIFF not configured.
+    signIn() {
+      if (state.liffReady && typeof liff !== 'undefined' && !liff.isLoggedIn()) liff.login();
     },
     // Mutations — call from React event handlers when you wire them up.
     // Example: BACKEND.save('tasks', { id, status: 'done' })

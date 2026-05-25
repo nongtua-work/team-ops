@@ -15,12 +15,12 @@ window.TC_CONFIG = {
   // Apps Script Web App URL — the /exec endpoint after you Deploy → New deployment → Web app.
   // Looks like: https://script.google.com/macros/s/AKfycb.../exec
   // Leave empty to run with local seed data only (no Sheets sync).
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzzoUjQ8O5KU-Ml9Fz6vjEOZxgX95jn37jANiEfy8A9DdQP97MtC9QHhq53QlyDJxffsg/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxvzlt3SYenTPOMSFgqkP_KDZEBc_6cT8wie2QnbfRYq_3-5sCaNgARQEbTaCHifTXb0Q/exec',
 
   // Shared secret echoed to Apps Script on every request, checked server-side.
   // Generate any random string and paste the same value into Script Properties → APP_TOKEN.
   // Optional — if you leave it empty here AND in Script Properties, auth is skipped.
-  APP_TOKEN: '',
+  APP_TOKEN: 'cw12211980',
 
   // Polling cadence for read-only sync from Sheets, in seconds. 0 = no polling.
   SYNC_INTERVAL_SEC: 60,

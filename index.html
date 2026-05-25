@@ -2420,7 +2420,12 @@ function ScreenApproval({ go, role, toast, openAdd }) {
       </div>
 
       <window.Sheet open={!!openItem} onClose={() => setOpenItem(null)} title="Approval details">
-        {openItem && <ApprovalDetail it={openItem} role={role} onAct={(verb) => { toast(verb === 'approve' ? 'Approved & ส่งกลับทีม' : 'Send revisions'); setOpenItem(null); }} />}
+        {openItem && <ApprovalDetail it={openItem} role={role} onAct={(verb) => {
+          const decision = verb === 'approve' ? 'approved' : 'revise';
+          const requester = window.userById(openItem.from);
+          window.BACKEND?.save?.('approval', { id: openItem.id, decision, by: role.id, notifyLineUserId: requester?.lineUserId, note: '' })?.catch(e => console.warn('[TC] decide approval:', e));
+          toast(verb === 'approve' ? 'Approved & ส่งกลับทีม' : 'Send revisions'); setOpenItem(null);
+        }} />}
       </window.Sheet>
     </div>
   );
@@ -3265,7 +3270,10 @@ function NewTaskForm({ role, toast, onDone, onBack }) {
         <FRow label="Tag"><FSelect value={tag} onChange={setTag} options={['Concept','Design','Sample','Shoot','Wetplate','Edit','VDO','QC','Marketing','Equipment','Listing']} /></FRow>
       </div>
       <FRow label="Priority"><FSegmented value={pri} onChange={setPri} options={[{value:'low',label:'Low'},{value:'med',label:'Med'},{value:'high',label:'High'}]} /></FRow>
-      <FActions onBack={onBack} onSubmit={() => { toast(`Task → ${window.userById(owner)?.name || owner}`); onDone(); }} disabled={!title.trim()} submitLabel="สร้าง task" />
+      <FActions onBack={onBack} onSubmit={() => {
+        window.BACKEND?.save?.('tasks', { project, title, owner, due, status:'todo', priority: pri, tag, note:'' })?.catch(e => console.warn('[TC] save task:', e));
+        toast(`Task → ${window.userById(owner)?.name || owner}`); onDone();
+      }} disabled={!title.trim()} submitLabel="สร้าง task" />
     </div>
   );
 }
@@ -3313,7 +3321,11 @@ function NewApprovalForm({ role, toast, onDone, onBack }) {
         <FSegmented value={urgent ? 'urgent' : 'normal'} onChange={v => setUrgent(v === 'urgent')}
                     options={[{value:'normal',label:'Normal'},{value:'urgent',label:'⚡ Urgent'}]} />
       </FRow>
-      <FActions onBack={onBack} onSubmit={() => { toast(`ส่ง approve → ${boss.name} + LINE`); onDone(); }} disabled={!what.trim()} submitLabel="ส่ง approve" />
+      <FActions onBack={onBack} onSubmit={() => {
+        const attach = JSON.stringify(links.filter(l => l.trim()));
+        window.BACKEND?.save?.('approvals', { project, what, from: role.id, to: boss.id, size:'', status:'pending', urgent, sent: new Date().toISOString(), note, attachments: attach })?.catch(e => console.warn('[TC] save approval:', e));
+        toast(`ส่ง approve → ${boss.name} + LINE`); onDone();
+      }} disabled={!what.trim()} submitLabel="ส่ง approve" />
     </div>
   );
 }
@@ -3341,7 +3353,10 @@ function ReserveEquipForm({ role, toast, onDone, onBack, presetItem }) {
           ✓ {it.name} พร้อมใช้งาน · SN {it.sn}
         </div>
       )}
-      <FActions onBack={onBack} onSubmit={() => { toast(`จอง ${it?.name}`); onDone(); }} disabled={!from || !to} submitLabel="จองเลย" />
+      <FActions onBack={onBack} onSubmit={() => {
+        if (it) window.BACKEND?.save?.('equipment', { id: it.id, state:'out', who: role.id, ret: to })?.catch(e => console.warn('[TC] reserve equip:', e));
+        toast(`จอง ${it?.name}`); onDone();
+      }} disabled={!from || !to} submitLabel="จองเลย" />
     </div>
   );
 }
@@ -3359,7 +3374,10 @@ function AddEquipItemForm({ role, toast, onDone, onBack }) {
       <FRow label="หมวด"><FSelect value={cat} onChange={setCat} options={cats} /></FRow>
       <FRow label="ชื่ออุปกรณ์"><FInput value={name} onChange={setName} placeholder="เช่น Sony A7 IV" /></FRow>
       <FRow label="Serial / รหัสเครื่อง"><FInput value={sn} onChange={setSn} placeholder="A7-002" mono /></FRow>
-      <FActions onBack={onBack} onSubmit={() => { toast(`เพิ่ม ${name} เข้าคลัง`); onDone(); }} disabled={!name.trim() || !sn.trim()} submitLabel="เพิ่มเข้าคลัง" />
+      <FActions onBack={onBack} onSubmit={() => {
+        window.BACKEND?.save?.('equipment', { cat, name, sn, state:'in', who:'', ret:'', project: window.APP_DATA.project?.code || '' })?.catch(e => console.warn('[TC] add equip:', e));
+        toast(`เพิ่ม ${name} เข้าคลัง`); onDone();
+      }} disabled={!name.trim() || !sn.trim()} submitLabel="เพิ่มเข้าคลัง" />
     </div>
   );
 }
@@ -3440,7 +3458,14 @@ function NewProjectForm({ role, toast, onDone, onBack }) {
           }}>+ เพิ่ม freelance</button>
         </div>
       </FRow>
-      <FActions onBack={onBack} onSubmit={() => { toast(`สร้าง project ${code}`); onDone(); }}
+      <FActions onBack={onBack} onSubmit={() => {
+        const pid = code.toLowerCase();
+        window.BACKEND?.save?.('projects', { id: pid, code, name, sub:'', cover: color, launch, daysLeft: 0, progress: 0, pieces: Number(pieces) || 0, status:'next', archived: false })?.catch(e => console.warn('[TC] save project:', e));
+        freelancers.filter(f => f.name.trim()).forEach(f => {
+          window.BACKEND?.save?.('freelancers', { project: code, name: f.name, role: f.role, short:'', tint:'#7A5A12', rate: f.rate, contact:'' })?.catch(e => console.warn('[TC] save freelancer:', e));
+        });
+        toast(`สร้าง project ${code}`); onDone();
+      }}
                 disabled={!name.trim() || !code.trim() || code.length < 3} submitLabel={`สร้าง ${code || 'project'}`} />
     </div>
   );
@@ -3549,7 +3574,10 @@ function HireFreelanceForm({ role, toast, onDone, onBack }) {
           ))}
         </div>
       </FRow>
-      <FActions onBack={onBack} onSubmit={() => { toast(`Hired ${name} → ${p.code}`); onDone(); }} disabled={!name.trim() || !contact.trim()} submitLabel="เพิ่ม freelance" />
+      <FActions onBack={onBack} onSubmit={() => {
+        window.BACKEND?.save?.('freelancers', { project: p.code, name, role: roleField, short, tint, rate, contact })?.catch(e => console.warn('[TC] save freelance:', e));
+        toast(`Hired ${name} → ${p.code}`); onDone();
+      }} disabled={!name.trim() || !contact.trim()} submitLabel="เพิ่ม freelance" />
     </div>
   );
 }
@@ -3669,7 +3697,12 @@ function TeamMemberForm({ member, role, toast, onDone, onBack, editing = false }
         }}>ลบสมาชิกออกจาก core team</button>
       )}
 
-      <FActions onBack={onBack} onSubmit={() => onDone(editing ? `อัพเดท ${name}` : `เพิ่ม ${name} เข้าทีม`)}
+      <FActions onBack={onBack} onSubmit={() => {
+        const payload = { name, role: roleField, short, tint, online, isBoss: !!member.isBoss, isLead: !!member.isLead, lineUserId: member.lineUserId || '' };
+        if (editing && member.id) payload.id = member.id;
+        window.BACKEND?.save?.('team', payload)?.catch(e => console.warn('[TC] save team:', e));
+        onDone(editing ? `อัพเดท ${name}` : `เพิ่ม ${name} เข้าทีม`);
+      }}
                 disabled={!name.trim() || !roleField.trim()} submitLabel={editing ? 'บันทึก' : 'เพิ่มเข้าทีม'} />
     </div>
   );
@@ -3835,7 +3868,10 @@ function TaskDetailSheet({ open, onClose, task, role, toast }) {
           </div>
           <FRow label="หัวข้องาน"><FInput value={t.t} onChange={v => set('t', v)} /></FRow>
           <FRow label="โน๊ต / ความคืบหน้า"><FTextarea value={t.note || ''} onChange={v => set('note', v)} rows={3} placeholder="อัพเดทความคืบหน้า..." /></FRow>
-          <FActions onBack={onClose} backLabel="ยกเลิก" onSubmit={() => { toast(`อัพเดท task · ${t.status}`); onClose(); }} submitLabel="บันทึก" />
+          <FActions onBack={onClose} backLabel="ยกเลิก" onSubmit={() => {
+            window.BACKEND?.save?.('tasks', { id: t.id, project: window.APP_DATA.project?.code || '', title: t.t, owner: t.owner, due: t.due, status: t.status, priority: t.priority, tag: t.tag, note: t.note || '' })?.catch(e => console.warn('[TC] save task edit:', e));
+            toast(`อัพเดท task · ${t.status}`); onClose();
+          }} submitLabel="บันทึก" />
         </>
       ) : (
         <>

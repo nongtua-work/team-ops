@@ -20,7 +20,7 @@ window.TC_CONFIG = {
   // Shared secret echoed to Apps Script on every request, checked server-side.
   // Generate any random string and paste the same value into Script Properties → APP_TOKEN.
   // Optional — if you leave it empty here AND in Script Properties, auth is skipped.
-  APP_TOKEN: 'Cw12211980',
+  APP_TOKEN: 'cw12211980',
 
   // Polling cadence for read-only sync from Sheets, in seconds. 0 = no polling.
   SYNC_INTERVAL_SEC: 60,

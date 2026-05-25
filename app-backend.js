@@ -80,7 +80,19 @@
     const data = await apiGet('all', state.profile ? { uid: state.profile.userId } : {});
     if (!data || typeof data !== 'object') return;
     for (const k of Object.keys(data)) {
-      if (data[k] != null) window.APP_DATA[k] = data[k];
+      const v = data[k];
+      if (v == null) continue;
+      // Empty array from server → keep seed data (e.g. before seedAll runs).
+      if (Array.isArray(v) && v.length === 0) continue;
+      const cur = window.APP_DATA[k];
+      // For plain objects (notably `project`), shallow-merge so seed-only
+      // fields the schema doesn't carry (phases, samples, today) survive.
+      if (cur && typeof cur === 'object' && !Array.isArray(cur)
+          && typeof v === 'object' && !Array.isArray(v)) {
+        window.APP_DATA[k] = Object.assign({}, cur, v);
+      } else {
+        window.APP_DATA[k] = v;
+      }
     }
     state.lastSync = new Date();
     window.dispatchEvent(new CustomEvent('tc-data-sync', { detail: { at: state.lastSync } }));

@@ -3272,6 +3272,9 @@ function NewTaskForm({ role, toast, onDone, onBack }) {
       <FRow label="Priority"><FSegmented value={pri} onChange={setPri} options={[{value:'low',label:'Low'},{value:'med',label:'Med'},{value:'high',label:'High'}]} /></FRow>
       <FActions onBack={onBack} onSubmit={() => {
         window.BACKEND?.save?.('tasks', { project, title, owner, due, status:'todo', priority: pri, tag, note:'' })?.catch(e => console.warn('[TC] save task:', e));
+        // Notify the assignee via LINE
+        const assignee = window.APP_DATA.team.find(u => u.id === owner);
+        if (assignee?.lineUserId) window.BACKEND?.notify?.(assignee.lineUserId, `📋 มีงานใหม่สำหรับคุณ\n${title}\nกำหนด: ${due || 'ไม่ระบุ'} · Project: ${project}`)?.catch(() => {});
         toast(`Task → ${window.userById(owner)?.name || owner}`); onDone();
       }} disabled={!title.trim()} submitLabel="สร้าง task" />
     </div>
@@ -3324,6 +3327,8 @@ function NewApprovalForm({ role, toast, onDone, onBack }) {
       <FActions onBack={onBack} onSubmit={() => {
         const attach = JSON.stringify(links.filter(l => l.trim()));
         window.BACKEND?.save?.('approvals', { project, what, from: role.id, to: boss.id, size:'', status:'pending', urgent, sent: new Date().toISOString(), note, attachments: attach })?.catch(e => console.warn('[TC] save approval:', e));
+        // Notify the boss via LINE
+        if (boss?.lineUserId) window.BACKEND?.notify?.(boss.lineUserId, `${urgent ? '⚡ URGENT · ' : ''}📩 รอ Approve\n${what}\nจาก: ${role.name} · Project: ${project}`)?.catch(() => {});
         toast(`ส่ง approve → ${boss.name} + LINE`); onDone();
       }} disabled={!what.trim()} submitLabel="ส่ง approve" />
     </div>
@@ -3870,6 +3875,16 @@ function TaskDetailSheet({ open, onClose, task, role, toast }) {
           <FRow label="โน๊ต / ความคืบหน้า"><FTextarea value={t.note || ''} onChange={v => set('note', v)} rows={3} placeholder="อัพเดทความคืบหน้า..." /></FRow>
           <FActions onBack={onClose} backLabel="ยกเลิก" onSubmit={() => {
             window.BACKEND?.save?.('tasks', { id: t.id, project: window.APP_DATA.project?.code || '', title: t.t, owner: t.owner, due: t.due, status: t.status, priority: t.priority, tag: t.tag, note: t.note || '' })?.catch(e => console.warn('[TC] save task edit:', e));
+            // Notify Lead when task is sent for review; notify owner when approved/done
+            if (t.status === 'review') {
+              const lead = window.APP_DATA.team.find(u => u.isLead);
+              const taskOwner = window.APP_DATA.team.find(u => u.id === t.owner);
+              if (lead?.lineUserId) window.BACKEND?.notify?.(lead.lineUserId, `👀 งานรอตรวจ\n${t.t}\nจาก: ${taskOwner?.name || t.owner}`)?.catch(() => {});
+            }
+            if (t.status === 'done') {
+              const taskOwner = window.APP_DATA.team.find(u => u.id === t.owner);
+              if (taskOwner?.lineUserId) window.BACKEND?.notify?.(taskOwner.lineUserId, `✅ งานของคุณ Approved\n${t.t}`)?.catch(() => {});
+            }
             toast(`อัพเดท task · ${t.status}`); onClose();
           }} submitLabel="บันทึก" />
         </>
@@ -4012,14 +4027,15 @@ const { useState: useStateA, useEffect: useEffectA, useMemo: useMemoA } = React;
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "density": "comfy",
   "role":    "u2",
-  "showFrame": true
+  "showFrame": false
 }/*EDITMODE-END*/;
 
 // Custom iPhone frame (we manage the status bar inside screens)
 function PhoneFrame({ children, show = true }) {
   if (!show) {
+    // Full-screen production / LIFF mode — no mockup border, no max-width
     return <div style={{
-      width: '100%', maxWidth: 414, height: '100vh', overflow: 'hidden', position: 'relative',
+      width: '100%', height: '100vh', overflow: 'hidden', position: 'relative',
       background: window.TC.bg, fontFamily: '-apple-system, system-ui, sans-serif',
     }}>{children}</div>;
   }
@@ -4065,7 +4081,15 @@ function App() {
 
   const top = stack[stack.length - 1];
 
-  const role = useMemoA(() => window.APP_DATA.team.find(u => u.id === t.role) || window.APP_DATA.team[1], [t.role]);
+  const role = useMemoA(() => {
+    // When running inside LINE, auto-match the logged-in user's lineUserId → team member
+    const liffUserId = window.APP_DATA.user?.lineUserId;
+    if (liffUserId) {
+      const match = window.APP_DATA.team.find(u => u.lineUserId === liffUserId);
+      if (match) return match;
+    }
+    return window.APP_DATA.team.find(u => u.id === t.role) || window.APP_DATA.team[1];
+  }, [t.role]);
 
   const toast = (m) => { setToastMsg(m); setTimeout(() => setToastMsg(''), 2200); };
   const openAdd = (step = 'menu') => { setAddInitial(step); setAddSheet(true); };
@@ -4100,67 +4124,75 @@ function App() {
     }
   };
 
+  // Shared inner content — used in both frame and full-screen modes
+  const appContent = (
+    <div style={{ position:'absolute', inset: 0, overflow:'hidden' }}>
+      {/* Animated screen stack — only top is visible */}
+      <div className="tc-scroll" style={{
+        position:'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden',
+        background: window.TC.bg,
+      }}
+        key={stack.length + '-' + top.s}
+        data-screen-label={top.s}
+      >
+        <div style={{ animation: stack.length > 1 ? 'tcPush 380ms cubic-bezier(.32,.72,0,1) both' : 'tcFade 220ms ease both' }}>
+          {renderScreen(top)}
+        </div>
+      </div>
+
+      {/* Bottom tab bar */}
+      {(['home','projects','tools'].includes(top.s) || (top.s === 'approval' && stack.length === 1)) && (
+        <window.TabBar active={tab} onChange={changeTab} onAdd={() => openAdd('menu')} role={role} />
+      )}
+
+      <window.QuickAddSheet
+        open={addSheet}
+        onClose={() => setAddSheet(false)}
+        role={role}
+        toast={toast}
+        go={go}
+        initial={addInitial}
+      />
+
+      <window.NotificationsSheet open={openNotif} onClose={() => setOpenNotif(false)} role={role} go={go} toast={toast} />
+      <window.SearchSheet open={openSearch} onClose={() => setOpenSearch(false)} go={go} />
+      <window.TaskDetailSheet open={!!taskSheet} task={taskSheet} onClose={() => setTaskSheet(null)} role={role} toast={toast} />
+      <window.Toast msg={toastMsg} />
+    </div>
+  );
+
   return (
     <window.DensityCtx.Provider value={t.density}>
-      <div style={{
-        minHeight: '100vh', display:'flex', alignItems:'center', justifyContent:'center',
-        background: 'radial-gradient(80% 60% at 50% 10%, #F4EFE4 0%, #E8DDC8 60%, #D7C9AE 100%)',
-        padding: 24, boxSizing:'border-box',
-      }}>
-        <PhoneFrame show={t.showFrame}>
-          {/* Animated screen stack — only show top */}
-          <div style={{ position:'absolute', inset: 0, overflow:'hidden' }}>
-            <div className="tc-scroll" style={{
-              position:'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden',
-              background: window.TC.bg,
-            }}
-              key={stack.length + '-' + top.s}
-              data-screen-label={top.s}
-            >
-              <div style={{ animation: stack.length > 1 ? 'tcPush 380ms cubic-bezier(.32,.72,0,1) both' : 'tcFade 220ms ease both' }}>
-                {renderScreen(top)}
-              </div>
-            </div>
-
-            {/* Bottom tab bar — present on root screens (and approval which is the Inbox root) */}
-            {(['home','projects','tools'].includes(top.s) || (top.s === 'approval' && stack.length === 1)) && (
-              <window.TabBar active={tab} onChange={changeTab} onAdd={() => openAdd('menu')} role={role} />
-            )}
-
-            <window.QuickAddSheet
-              open={addSheet}
-              onClose={() => setAddSheet(false)}
-              role={role}
-              toast={toast}
-              go={go}
-              initial={addInitial}
+      {t.showFrame ? (
+        /* ── Design / preview mode: centred mockup + tweaks panel ── */
+        <div style={{
+          minHeight: '100vh', display:'flex', alignItems:'center', justifyContent:'center',
+          background: 'radial-gradient(80% 60% at 50% 10%, #F4EFE4 0%, #E8DDC8 60%, #D7C9AE 100%)',
+          padding: 24, boxSizing:'border-box',
+        }}>
+          <PhoneFrame show={true}>{appContent}</PhoneFrame>
+          <window.TweaksPanel title="Tweaks">
+            <window.TweakSection label="View as" />
+            <window.TweakSelect
+              label="Role"
+              value={t.role}
+              options={window.APP_DATA.team.map(u => ({ value: u.id, label: `${u.name} — ${u.role}` }))}
+              onChange={(v) => setTweak('role', v)}
             />
-
-            <window.NotificationsSheet open={openNotif} onClose={() => setOpenNotif(false)} role={role} go={go} toast={toast} />
-            <window.SearchSheet open={openSearch} onClose={() => setOpenSearch(false)} go={go} />
-            <window.TaskDetailSheet open={!!taskSheet} task={taskSheet} onClose={() => setTaskSheet(null)} role={role} toast={toast} />
-
-            <window.Toast msg={toastMsg} />
-          </div>
-        </PhoneFrame>
-
-        {/* Tweaks panel */}
-        <window.TweaksPanel title="Tweaks">
-          <window.TweakSection label="View as" />
-          <window.TweakSelect
-            label="Role"
-            value={t.role}
-            options={window.APP_DATA.team.map(u => ({ value: u.id, label: `${u.name} — ${u.role}` }))}
-            onChange={(v) => setTweak('role', v)}
-          />
-          <window.TweakSection label="Layout" />
-          <window.TweakRadio label="Density" value={t.density}
-                             options={['compact','comfy']}
-                             onChange={(v) => setTweak('density', v)} />
-          <window.TweakToggle label="Phone frame" value={t.showFrame}
-                              onChange={(v) => setTweak('showFrame', v)} />
-        </window.TweaksPanel>
-      </div>
+            <window.TweakSection label="Layout" />
+            <window.TweakRadio label="Density" value={t.density}
+                               options={['compact','comfy']}
+                               onChange={(v) => setTweak('density', v)} />
+            <window.TweakToggle label="Phone frame" value={t.showFrame}
+                                onChange={(v) => setTweak('showFrame', v)} />
+          </window.TweaksPanel>
+        </div>
+      ) : (
+        /* ── Production / LINE LIFF mode: full screen, no mockup ── */
+        <div style={{ width:'100%', height:'100vh', overflow:'hidden', position:'relative', background: window.TC.bg }}>
+          {appContent}
+        </div>
+      )}
     </window.DensityCtx.Provider>
   );
 }

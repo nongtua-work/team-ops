@@ -72,6 +72,7 @@ window.APP_DATA = {
   prepost:  [],
   captions: [],
   media:    [],
+  phases:   [],
   // Asset type list (with default resolutions) — used by File naming.
   // Kept here as system config (not per-project data).
   assetTypes: [
@@ -1143,6 +1144,22 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
   const pendingApprovals = projApprovals.filter(a => !a.approvedAt && (a.status || 'pending') === 'pending');
   const urgentApprovals = projApprovals.filter(a => a.urgent);
 
+  // Derive the progress sub-label from real data: status field overrides; else
+  // compare progress % vs daysLeft to estimate whether the team is on track,
+  // slipping, or just starting. Pure-front-end heuristic — no hardcoded labels.
+  const progressLabel = (() => {
+    if (!p.code) return '';
+    if (p.status === 'done' || (p.daysLeft != null && p.daysLeft <= 0)) return 'Launched';
+    const pct = Number(p.progress) || 0;
+    const days = Number(p.daysLeft) || 0;
+    if (urgent.length >= 3) return 'Behind';
+    if (pct >= 80) return 'Almost done';
+    if (pct >= 50) return 'On track';
+    if (pct >= 20) return 'In progress';
+    if (days > 60) return 'Starting';
+    return 'Kicking off';
+  })();
+
   return (
     <div style={{ paddingBottom: 110 }}>
       {/* Header w/ vibrant glass gradient */}
@@ -1193,7 +1210,7 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
           {/* 4 KPI chips */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 8, marginTop: 20 }}>
             {[
-              { lab:'Progress', val: `${p.progress || 0}%`, sub:'On track' },
+              { lab:'Progress', val: `${p.progress || 0}%`, sub: progressLabel },
               { lab:'Tasks',    val: todayTasks.length, sub:'today' },
               { lab:'Samples',  val: `${p.samples?.ready ?? 0}/${p.samples?.total ?? 0}`, sub:'ready' },
               { lab:'Approve',  val: pendingApprovals.length, sub:'pending' },
@@ -1496,9 +1513,10 @@ function darken(hex) {
 // ─────────────────────────────────────────────────────────
 // 3. PROJECT DETAIL — timeline + tabs
 // ─────────────────────────────────────────────────────────
-function ScreenProject({ go, role, openAdd, toast, openTask }) {
+function ScreenProject({ go, role, openAdd, toast, openTask, onNotif }) {
   const p = window.APP_DATA.project || {};
   const [tab, setTab] = useStateM('phases');
+  const [moreOpen, setMoreOpen] = React.useState(false);
   if (!p.code) {
     return (
       <div style={{ paddingBottom: 110 }}>
@@ -1525,8 +1543,12 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
             <button onClick={() => go('home')} style={{ ...ghostIcon, color:'#fff' }}>{window.I.back}</button>
           </window.Glass>
           <div style={{ display:'flex', gap: 8 }}>
-            <window.Glass radius={999} tint="rgba(255,255,255,0.18)" border><button style={{...ghostIcon, color:'#fff'}}>{window.I.bell}</button></window.Glass>
-            <window.Glass radius={999} tint="rgba(255,255,255,0.18)" border><button style={{...ghostIcon, color:'#fff'}}>{window.I.more}</button></window.Glass>
+            <window.Glass radius={999} tint="rgba(255,255,255,0.18)" border>
+              <button onClick={onNotif} style={{...ghostIcon, color:'#fff'}}>{window.I.bell}</button>
+            </window.Glass>
+            <window.Glass radius={999} tint="rgba(255,255,255,0.18)" border>
+              <button onClick={() => setMoreOpen(true)} style={{...ghostIcon, color:'#fff'}}>{window.I.more}</button>
+            </window.Glass>
           </div>
         </div>
         <div style={{ position:'relative', zIndex: 1 }}>
@@ -1569,7 +1591,7 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
       </div>
 
       <div style={{ padding: '18px 16px' }}>
-        {tab === 'phases' && <PhaseTimeline p={p} role={role} go={go} />}
+        {tab === 'phases' && <PhaseTimeline p={p} role={role} go={go} toast={toast} />}
         {tab === 'tasks'  && (
           <div style={{ display:'grid', gap: 8 }}>
             {p.today.map(t => <TaskRow key={t.id} t={t} onClick={() => openTask(t)} />)}
@@ -1645,10 +1667,72 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
         )}
         {tab === 'files' && <LinksTab role={role} />}
       </div>
+
+      {/* Project actions sheet (triggered by the "..." button) */}
+      <window.Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="จัดการโปรเจค" height="60%">
+        <div style={{ display:'grid', gap: 8 }}>
+          <ProjectActionRow icon={window.I.folder} label="ดู Projects ทั้งหมด"
+                            sub="เปิดรายการ collections"
+                            onClick={() => { setMoreOpen(false); go('projects'); }} />
+          <ProjectActionRow icon={window.I.kanban} label="เปิด Task board"
+                            sub={`${(p.today || []).length} รายการ`}
+                            onClick={() => { setMoreOpen(false); go('kanban'); }} />
+          <ProjectActionRow
+            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M16 4l4 4-4 4M8 8h12M8 20l-4-4 4-4M20 16H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            label="คัดลอก Project code" sub={p.code}
+            onClick={() => {
+              if (navigator.clipboard) navigator.clipboard.writeText(p.code).catch(() => {});
+              toast?.(`คัดลอก ${p.code} แล้ว`); setMoreOpen(false);
+            }} />
+          {role.isLead && (
+            <>
+              <div style={{ height: 8 }} />
+              <ProjectActionRow icon={window.I.check2} label={p.status === 'done' ? 'มาร์คเป็น Active' : 'มาร์คโปรเจคเสร็จ (done)'}
+                                sub="เปลี่ยนสถานะ status field"
+                                onClick={() => {
+                                  const next = p.status === 'done' ? 'doing' : 'done';
+                                  window.BACKEND?.save?.('projects', { id: p.id, status: next })?.catch(() => {});
+                                  toast?.(`เปลี่ยนสถานะเป็น ${next}`); setMoreOpen(false);
+                                }} />
+              <ProjectActionRow
+                icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 8h16v12H4V8zM2 4h20v4H2V4zM10 12h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                label={p.archived ? 'นำกลับจาก Archive' : 'ย้ายเข้า Archive'}
+                sub="ซ่อนจาก Active tab"
+                tone="warn"
+                onClick={() => {
+                  window.BACKEND?.save?.('projects', { id: p.id, archived: !p.archived })?.catch(() => {});
+                  toast?.(p.archived ? 'นำกลับจาก archive' : 'archive แล้ว'); setMoreOpen(false);
+                }} />
+            </>
+          )}
+        </div>
+      </window.Sheet>
     </div>
   );
 }
 window.ScreenProject = ScreenProject;
+
+function ProjectActionRow({ icon, label, sub, onClick, tone = 'normal' }) {
+  const fg = tone === 'warn' ? '#8C1F3A' : window.TC.ink;
+  const bg = tone === 'warn' ? window.TC.roseSoft : window.TC.greenSoft;
+  const ic = tone === 'warn' ? '#8C1F3A' : window.TC.greenDk;
+  return (
+    <button onClick={onClick} className="tc-tap" style={{
+      display:'flex', alignItems:'center', gap: 12, padding: 14, borderRadius: 16,
+      background: window.TC.card, border:`0.5px solid ${window.TC.hair}`, cursor:'pointer', textAlign:'left',
+    }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: 12, background: bg, color: ic,
+        display:'flex', alignItems:'center', justifyContent:'center', flexShrink: 0,
+      }}>{icon}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: fg }}>{label}</div>
+        {sub && <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 1 }}>{sub}</div>}
+      </div>
+      <span style={{ color: window.TC.muted, display:'inline-flex' }}>{window.I.chev}</span>
+    </button>
+  );
+}
 
 function Stat({ label, val }) {
   return (
@@ -1791,63 +1875,168 @@ const inputS = {
 const btnGhost = { padding:'9px 14px', borderRadius: 999, border:'none', background:'rgba(27,26,23,0.07)', color: window.TC.ink, fontSize: 14, fontWeight: 700, cursor:'pointer' };
 const btnPrimary = { padding:'9px 16px', borderRadius: 999, border:'none', background: window.TC.green, color:'#fff', fontSize: 14, fontWeight: 700, cursor:'pointer' };
 
-function PhaseTimeline({ p, role, go }) {
+function PhaseTimeline({ p, role, go, toast }) {
+  // Phases come exclusively from Sheets (APP_DATA.project.phases). Lead can edit.
+  const [phases, setPhases] = React.useState(() => (p.phases || []).map(ph => ({
+    ...ph,
+    pct: Number(ph.pct) || 0,
+    sortOrder: Number(ph.sortOrder) || 0,
+  })));
+  const [editing, setEditing] = React.useState(null);
+  const proj = p.code || '';
+  const teamOptions = (window.APP_DATA.team || []).map(u => ({ value: u.id, label: `${u.name} — ${u.role}` }));
+
+  const upsertPhase = (draft) => {
+    const isNew = !draft.id;
+    const id = draft.id || ('ph-' + Date.now());
+    const sortOrder = draft.sortOrder || (phases.length ? Math.max(...phases.map(x => x.sortOrder || 0)) + 1 : 1);
+    const payload = {
+      id, project: proj, key: draft.key || id, th: draft.th || '', en: draft.en || '',
+      status: draft.status || 'queue', pct: Number(draft.pct) || 0,
+      owner: draft.owner || '', dates: draft.dates || '', sortOrder,
+    };
+    window.BACKEND?.save?.('phases', payload)?.catch(() => {});
+    setPhases(prev => {
+      if (isNew) return [...prev, payload].sort((a, b) => a.sortOrder - b.sortOrder);
+      return prev.map(p => p.id === id ? payload : p).sort((a, b) => a.sortOrder - b.sortOrder);
+    });
+    toast?.(isNew ? 'เพิ่ม phase แล้ว' : 'แก้ phase แล้ว');
+  };
+  const deletePhase = (id) => {
+    window.BACKEND?.save?.('delete', { tab: 'phases', id })?.catch(() => {});
+    setPhases(prev => prev.filter(x => x.id !== id));
+    toast?.('ลบ phase แล้ว');
+  };
+
+  const doneCount = phases.filter(x => x.status === 'done').length;
+  const activePhase = phases.find(x => x.status === 'doing');
+  const progressPct = phases.length ? Math.round((doneCount / phases.length) * 100) : 0;
+
   return (
     <div>
-      <window.SectionHead title="Phases" sub={`${p.phases.filter(x=>x.status==='done').length}/${p.phases.length} complete · Active: ${p.phases.find(x=>x.status==='doing')?.th}`} />
-      <div style={{ position:'relative', paddingLeft: 22 }}>
-        {/* vertical line */}
-        <div style={{ position:'absolute', left: 9, top: 18, bottom: 18, width: 2,
-                      background: `linear-gradient(180deg, ${window.TC.green} 0%, ${window.TC.green} ${p.progress}%, ${window.TC.hair} ${p.progress}%, ${window.TC.hair} 100%)`,
-                      borderRadius: 2 }} />
-        <div style={{ display:'grid', gap: 14 }}>
-          {p.phases.map((ph, i) => {
-            const u = window.userById(ph.owner);
-            const isDone = ph.status === 'done';
-            const isDoing = ph.status === 'doing';
-            const dotColor = isDone ? window.TC.green : isDoing ? window.TC.green : 'transparent';
-            return (
-              <div key={ph.key} style={{ position:'relative' }}>
-                <div style={{
-                  position:'absolute', left: -22, top: 18, width: 20, height: 20, borderRadius: 999,
-                  background: dotColor, border: `2.5px solid ${isDoing || isDone ? window.TC.green : window.TC.hair}`,
-                  display:'flex', alignItems:'center', justifyContent:'center', color:'#fff',
-                  boxShadow: isDoing ? `0 0 0 5px ${window.TC.greenSoft}` : 'none',
-                  animation: isDoing ? 'tcSpring 600ms cubic-bezier(.32,.72,0,1)' : 'none',
-                }}>
-                  {isDone && <span style={{ transform:'scale(0.75)' }}>{window.I.check}</span>}
-                  {isDoing && <span style={{ width: 6, height: 6, background:'#fff', borderRadius: 999 }} />}
-                </div>
-                <window.Card pad={14} radius={20} style={{ marginLeft: 4 }}>
-                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap: 10 }}>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 3 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.5, textTransform:'uppercase' }}>{String(i+1).padStart(2,'0')} · {ph.en}</span>
-                        <window.Tag kind={ph.status} sm />
-                      </div>
-                      <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{ph.th}</div>
-                      <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 4, display:'flex', alignItems:'center', gap: 8 }}>
-                        <span>{ph.dates}</span>
-                        {u && (
-                          <span style={{ display:'inline-flex', alignItems:'center', gap: 4 }}>
-                            · <window.Avatar user={u} size={16} /> {u.name}
-                          </span>
+      <window.SectionHead
+        title="Phases"
+        sub={phases.length
+          ? `${doneCount}/${phases.length} complete${activePhase ? ` · Active: ${activePhase.th}` : ''}`
+          : 'ยังไม่มี phase'}
+        right={role.isLead && (
+          <window.TextBtn onClick={() => setEditing({ id: '', key: '', th: '', en: '', status: 'queue', pct: 0, owner: role.id, dates: '', sortOrder: 0 })}>
+            + เพิ่ม phase
+          </window.TextBtn>
+        )}
+      />
+
+      {phases.length === 0 ? (
+        <window.Card pad={20} radius={20}>
+          <div style={{ textAlign:'center', color: window.TC.muted, fontSize: 14 }}>
+            ยังไม่มี phase สำหรับโปรเจคนี้
+            {role.isLead && (
+              <button onClick={() => setEditing({ id: '', key: '', th: '', en: '', status: 'queue', pct: 0, owner: role.id, dates: '', sortOrder: 0 })} style={{
+                display:'block', margin:'12px auto 0', background: window.TC.green, color:'#fff', border:'none',
+                borderRadius: 999, padding:'8px 16px', fontSize: 14, fontWeight: 700, cursor:'pointer',
+              }}>เพิ่ม phase แรก</button>
+            )}
+          </div>
+        </window.Card>
+      ) : (
+        <div style={{ position:'relative', paddingLeft: 22 }}>
+          {/* vertical line — fills proportional to completed phases */}
+          <div style={{ position:'absolute', left: 9, top: 18, bottom: 18, width: 2,
+                        background: `linear-gradient(180deg, ${window.TC.green} 0%, ${window.TC.green} ${progressPct}%, ${window.TC.hair} ${progressPct}%, ${window.TC.hair} 100%)`,
+                        borderRadius: 2 }} />
+          <div style={{ display:'grid', gap: 14 }}>
+            {phases.map((ph, i) => {
+              const u = window.userById(ph.owner);
+              const isDone = ph.status === 'done';
+              const isDoing = ph.status === 'doing';
+              const dotColor = isDone ? window.TC.green : isDoing ? window.TC.green : 'transparent';
+              return (
+                <div key={ph.id || ph.key || i} style={{ position:'relative' }}>
+                  <div style={{
+                    position:'absolute', left: -22, top: 18, width: 20, height: 20, borderRadius: 999,
+                    background: dotColor, border: `2.5px solid ${isDoing || isDone ? window.TC.green : window.TC.hair}`,
+                    display:'flex', alignItems:'center', justifyContent:'center', color:'#fff',
+                    boxShadow: isDoing ? `0 0 0 5px ${window.TC.greenSoft}` : 'none',
+                    animation: isDoing ? 'tcSpring 600ms cubic-bezier(.32,.72,0,1)' : 'none',
+                  }}>
+                    {isDone && <span style={{ transform:'scale(0.75)' }}>{window.I.check}</span>}
+                    {isDoing && <span style={{ width: 6, height: 6, background:'#fff', borderRadius: 999 }} />}
+                  </div>
+                  <window.Card pad={14} radius={20} style={{ marginLeft: 4, cursor: role.isLead ? 'pointer' : 'default' }}
+                               onClick={role.isLead ? () => setEditing({ ...ph }) : undefined}>
+                    <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap: 10 }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 3 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.5, textTransform:'uppercase' }}>{String(i+1).padStart(2,'0')}{ph.en ? ` · ${ph.en}` : ''}</span>
+                          <window.Tag kind={ph.status} sm />
+                        </div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{ph.th || ph.key || '(ไม่มีชื่อ)'}</div>
+                        {(ph.dates || u) && (
+                          <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 4, display:'flex', alignItems:'center', gap: 8 }}>
+                            {ph.dates && <span>{ph.dates}</span>}
+                            {u && (
+                              <span style={{ display:'inline-flex', alignItems:'center', gap: 4 }}>
+                                {ph.dates ? '· ' : ''}<window.Avatar user={u} size={16} /> {u.name}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
+                      {role.isLead && (
+                        <span style={{ color: window.TC.muted, display:'inline-flex' }}>{window.I.chev}</span>
+                      )}
                     </div>
-                  </div>
-                  {!isDone && ph.pct > 0 && <div style={{ marginTop: 10 }}><window.Bar pct={ph.pct} color={window.TC.green} /></div>}
-                  {ph.key === 'shoot' && (
-                    <div style={{ marginTop: 12, padding: 10, borderRadius: 14, background: window.TC.amberSoft, fontSize: 13, color: '#7A5A12', fontWeight: 600, lineHeight: 1.4 }}>
-                      ⚠︎ Pre-flight checklist: sample พร้อม 9/14 · size check · กล้องจอง 2/4 · location confirm
-                    </div>
-                  )}
-                </window.Card>
-              </div>
-            );
-          })}
+                    {!isDone && ph.pct > 0 && <div style={{ marginTop: 10 }}><window.Bar pct={ph.pct} color={window.TC.green} /></div>}
+                  </window.Card>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Edit / Add phase sheet */}
+      <window.Sheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? `แก้ phase — ${editing.th || editing.key || ''}` : 'เพิ่ม phase'} height="86%">
+        {editing && (
+          <div>
+            <FRow label="ชื่อ phase (ไทย)">
+              <FInput value={editing.th} onChange={v => setEditing(e => ({ ...e, th: v }))} placeholder="เช่น ผลิตตัวอย่าง" />
+            </FRow>
+            <FRow label="ชื่อ phase (English)" hint="ใช้แสดงเป็น label เล็กๆ ในการ์ด">
+              <FInput value={editing.en} onChange={v => setEditing(e => ({ ...e, en: v }))} placeholder="เช่น Sample" />
+            </FRow>
+            <FRow label="Status">
+              <FSegmented value={editing.status} onChange={v => setEditing(e => ({ ...e, status: v }))}
+                          options={[{value:'queue',label:'Queue'},{value:'next',label:'Next'},{value:'doing',label:'Doing'},{value:'done',label:'Done'}]} />
+            </FRow>
+            <FRow label="ความคืบหน้า (%)" hint={`${editing.pct}%`}>
+              <input type="range" min="0" max="100" step="5" value={editing.pct}
+                     onChange={e => setEditing(p => ({ ...p, pct: Number(e.target.value) }))}
+                     style={{ width:'100%' }} />
+            </FRow>
+            <FRow label="ผู้รับผิดชอบ">
+              <FSelect value={editing.owner} onChange={v => setEditing(e => ({ ...e, owner: v }))}
+                       options={[{ value:'', label:'— ไม่ระบุ —' }, ...teamOptions]} />
+            </FRow>
+            <FRow label="ช่วงวันที่" hint="ใส่เป็นข้อความ เช่น 25 พ.ค. – 18 มิ.ย.">
+              <FInput value={editing.dates} onChange={v => setEditing(e => ({ ...e, dates: v }))} placeholder="25 พ.ค. – 18 มิ.ย." />
+            </FRow>
+            <FRow label="ลำดับ (sort)" hint="เลขน้อย = ขึ้นก่อน">
+              <FInput value={String(editing.sortOrder || '')} onChange={v => setEditing(e => ({ ...e, sortOrder: Number(v) || 0 }))} placeholder="auto" />
+            </FRow>
+            {editing.id && (
+              <button onClick={() => { deletePhase(editing.id); setEditing(null); }} style={{
+                width:'100%', padding: 12, borderRadius: 14, border:'none', background: window.TC.roseSoft, color:'#8C1F3A',
+                fontSize: 15, fontWeight: 700, cursor:'pointer', marginTop: 6,
+              }}>ลบ phase นี้</button>
+            )}
+            <FActions onBack={() => setEditing(null)} backLabel="ยกเลิก"
+                      onSubmit={() => { upsertPhase(editing); setEditing(null); }}
+                      disabled={!(editing.th || '').trim()}
+                      submitLabel={editing.id ? 'บันทึก' : 'เพิ่ม'} />
+          </div>
+        )}
+      </window.Sheet>
     </div>
   );
 }

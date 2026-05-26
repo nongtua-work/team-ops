@@ -54,16 +54,22 @@ window.APP_DATA = {
     initial: 'มป',
     tint: '#1F8A5B',
   },
-  team: [
-    { id: 'u1', name: 'ฉัตรชกาจ',  role: 'Founder / Photographer',   short: 'ฉช', tint: '#0E5A3B', online: true,  isBoss: true },
-    { id: 'u2', name: 'มะปราง',    role: 'Operation Lead / Asst. Photo', short: 'มป', tint: '#1F8A5B', online: true,  isLead: true },
-    { id: 'u3', name: 'พลอย',       role: 'Project Coordinator',     short: 'พล', tint: '#5B9BD5', online: true },
-    { id: 'u4', name: 'แอม',        role: 'Admin / Procurement',     short: 'อม', tint: '#D4A24C', online: false },
-    { id: 'u5', name: 'เก๋',         role: 'Graphic Designer',        short: 'เก', tint: '#C45BAE', online: true },
-    { id: 'u6', name: 'บอม',        role: 'VDO Creator',             short: 'บอ', tint: '#E26A4A', online: true },
-    { id: 'u7', name: 'นัท',         role: 'Stock / QC',              short: 'นท', tint: '#7A5AE0', online: false },
-  ],
-  // Asset type list (with default resolutions) — used by File naming
+  // team / projects / project are populated from Sheets via BACKEND.bootstrap()
+  // — these are empty stubs so the app doesn't crash before the first sync.
+  team: [],
+  projects: [],
+  project: {
+    id: '', code: '', name: '', sub: '', cover: '#1F8A5B',
+    launch: '', daysLeft: 0, progress: 0, pieces: 0,
+    samples: { ready: 0, total: 0 },
+    coreTeam: [], freelancers: [], phases: [],
+    today: [], approvals: [], equipment: [], links: [],
+  },
+  prepost:  [],
+  captions: [],
+  media:    [],
+  // Asset type list (with default resolutions) — used by File naming.
+  // Kept here as system config (not per-project data).
   assetTypes: [
     { code:'LOOK',     label:'Lookbook full',    res:'2400x3000', note:'4:5 lookbook portrait' },
     { code:'PACKSHOT', label:'Packshot crop',    res:'2000x2500', note:'ครอป/ถ่ายเจาะจากภาพ look' },
@@ -79,74 +85,6 @@ window.APP_DATA = {
     { code:'FB',       label:'Facebook post',    res:'1200x1200', note:'square or 1.91:1' },
     { code:'LINE',     label:'LINE Shop',        res:'1080x1080', note:'1:1 square' },
   ],
-  // All projects (codes are the "ตัวย่อ" the Op Lead types in)
-  projects: [
-    { id:'fedfe-c2', code:'FED-C2', name:'Fedfe ทองแท้ไม่กลัวไฟ',     sub:'Collection 02 · FW26 Capsule', cover:'#1F8A5B', progress: 62, daysLeft: 28, status:'doing' },
-    { id:'capsule-x', code:'CAP-PM', name:'Capsule × คุณภีม',          sub:'Holiday Drop · Dec 2026',     cover:'#7A5AE0', progress: 18, daysLeft: 124, status:'doing' },
-    { id:'home-cs',   code:'HS-01',  name:'Home & Scent',              sub:'Lifestyle Sub-line',          cover:'#D4A24C', progress: 5,  daysLeft: 168, status:'next' },
-    { id:'fedfe-c1',  code:'FED-C1', name:'Fedfe ทองแท้ไม่กลัวไฟ',     sub:'Collection 01 · SS26',         cover:'#0E5A3B', progress: 100, daysLeft: 0, status:'done', archived:true },
-  ],
-  project: {
-    id: 'fedfe-c2',
-    name: 'Fedfe ทองแท้ไม่กลัวไฟ',
-    sub:  'Collection 02 · FW26 Capsule',
-    cover: '#1F8A5B',
-    code: 'FED-C2',
-    launch: '12 ส.ค. 2026',
-    daysLeft: 28,
-    progress: 62,
-    pieces: 14,
-    samples: { ready: 9, total: 14 },
-    // Project team — core member ids + freelancers (per-project hires)
-    coreTeam: ['u1','u2','u3','u4','u5','u6','u7'],
-    freelancers: [
-      { id:'f1', name:'กาย ภานุวัฒน์',  role:'Male model',      short:'GY', tint:'#3F3D38', rate:'฿8,000/day', contact:'IG @guymodel' },
-      { id:'f2', name:'มัย Vintage',     role:'Wetplate process', short:'MY', tint:'#7A5A12', rate:'฿15,000/job', contact:'LINE @vintagemai' },
-      { id:'f3', name:'บีม Stylist',      role:'Stylist',         short:'BM', tint:'#C45BAE', rate:'฿6,000/day', contact:'IG @beam.style' },
-    ],
-    phases: [
-      { key: 'concept',   th: 'หาไอเดีย & Mood',       en: 'Concept',        status: 'done',   pct: 100, owner: 'u1', dates: 'พ.ค. 1 – พ.ค. 10' },
-      { key: 'design',    th: 'ออกแบบ',                en: 'Design',         status: 'done',   pct: 100, owner: 'u2', dates: 'พ.ค. 11 – พ.ค. 24' },
-      { key: 'sample',    th: 'ผลิตตัวอย่าง',           en: 'Sample',         status: 'doing',  pct: 64,  owner: 'u4', dates: 'พ.ค. 25 – มิ.ย. 18' },
-      { key: 'shoot',     th: 'ถ่าย Lookbook',         en: 'Lookbook Shoot', status: 'next',   pct: 0,   owner: 'u1', dates: 'มิ.ย. 22 – มิ.ย. 24' },
-      { key: 'edit',      th: 'ตัดต่อ & กราฟิก',       en: 'Edit & Graphic', status: 'queue',  pct: 0,   owner: 'u5', dates: 'มิ.ย. 25 – ก.ค. 8' },
-      { key: 'qc',        th: 'QC สินค้าจริง',           en: 'QC',             status: 'queue',  pct: 0,   owner: 'u7', dates: 'ก.ค. 9 – ก.ค. 22' },
-      { key: 'listing',   th: 'ลงขายออนไลน์',          en: 'Listing',        status: 'queue',  pct: 0,   owner: 'u3', dates: 'ก.ค. 23 – ส.ค. 11' },
-    ],
-    today: [
-      { id:'t1', t:'Confirm ผ้าซับใน lot ใหม่ กับโรงงานบางบอน', owner:'u4', due:'วันนี้ 17:00', status:'doing',   priority:'high',   tag:'Sample' },
-      { id:'t2', t:'ส่ง mood board ห้องน้ำ สำหรับ shoot day 1', owner:'u2', due:'วันนี้ 20:00', status:'review', priority:'med',    tag:'Shoot' },
-      { id:'t3', t:'เช็คคิวกล้อง R5 + GFX100 สำหรับ 22 มิ.ย.',  owner:'u1', due:'พรุ่งนี้',     status:'todo',   priority:'high',   tag:'Equipment' },
-      { id:'t4', t:'ลองเสื้อ size 38 นายแบบ คุณกาย',           owner:'u7', due:'15 มิ.ย.',    status:'todo',   priority:'med',    tag:'Sample' },
-      { id:'t5', t:'Draft caption + hashtag สำหรับ launch teaser', owner:'u5', due:'18 มิ.ย.', status:'todo',   priority:'low',    tag:'Marketing' },
-      { id:'t6', t:'ตัด rough cut teaser 15 วิ',                owner:'u6', due:'20 มิ.ย.',    status:'todo',   priority:'med',    tag:'VDO' },
-      { id:'t7', t:'เบิกชุด lookbook 14 ตัว + ติดแท็กจากคลัง', owner:'u7', due:'21 มิ.ย.',    status:'todo',   priority:'high',   tag:'QC' },
-      { id:'t8', t:'จัดชุด wetplate (แผ่นกระจก + น้ำยา) ถ่ายไป portrait',  owner:'u7', due:'22 มิ.ย.',    status:'todo',   priority:'high',   tag:'Equipment' },
-      { id:'t9', t:'ผสมน้ำยา collodion สำรอง ตรวจอายุขวด',  owner:'u7', due:'19 มิ.ย.',    status:'doing',  priority:'med',    tag:'Wetplate' },
-      { id:'t10', t:'QC final รอบ pre-launch 14 ตัว',                owner:'u7', due:'5 ส.ค.',     status:'todo',   priority:'med',    tag:'QC' },
-    ],
-    approvals: [
-      { id:'a1', what:'Final mood board – Lookbook FW26',         from:'u2', size:'12 ภาพ', urgent:true,  sent:'2 ชม.ที่แล้ว' },
-      { id:'a2', what:'Sample รอบ 2 – Trench coat #FE-02-04',     from:'u4', size:'3 ตัวอย่าง', urgent:false, sent:'เมื่อวาน' },
-      { id:'a3', what:'งบเช่าสถานที่ – บ้านโบราณ บางรัก',         from:'u3', size:'฿24,000', urgent:false, sent:'เมื่อวาน' },
-    ],
-    equipment: [
-      { id:'e1', cat:'Camera',  name:'Canon EOS R5',         sn:'R5-001', state:'in',     who:null, ret:null },
-      { id:'e2', cat:'Camera',  name:'Fujifilm GFX 100 II',  sn:'GFX-001',state:'out',    who:'u1', ret:'24 มิ.ย.' },
-      { id:'e3', cat:'Lens',    name:'RF 24-70 f/2.8',       sn:'L-014',  state:'in',     who:null, ret:null },
-      { id:'e4', cat:'Lens',    name:'GF 110 f/2',           sn:'L-022',  state:'out',    who:'u1', ret:'24 มิ.ย.' },
-      { id:'e5', cat:'Light',   name:'Profoto B10X (pair)',  sn:'PR-003', state:'in',     who:null, ret:null },
-      { id:'e6', cat:'Light',   name:'Aputure 600d Pro',     sn:'AP-001', state:'maint',  who:null, ret:'กลับ 18 มิ.ย.' },
-      { id:'e7', cat:'Audio',   name:'Røde Wireless Pro',    sn:'RD-002', state:'in',     who:null, ret:null },
-      { id:'e8', cat:'Tripod',  name:'Manfrotto 504X',       sn:'TR-001', state:'in',     who:null, ret:null },
-      { id:'e9', cat:'Storage', name:'CFexpress 512GB ×4',   sn:'CF-A/B/C/D', state:'in',  who:null, ret:null },
-      { id:'e10', cat:'Wetplate', name:'4×5 Vintage กล้องบีบไม้',     sn:'WP-CAM-01', state:'in',  who:null, ret:null },
-      { id:'e11', cat:'Wetplate', name:'น้ำยา Collodion 500ml ×2',  sn:'WP-COL-02', state:'in',  who:null, ret:null },
-      { id:'e12', cat:'Wetplate', name:'ถัง Silver Nitrate bath',     sn:'WP-SN-01',  state:'in',  who:null, ret:null },
-      { id:'e13', cat:'Wetplate', name:'Glass plates 4×5 ×24',         sn:'WP-GL-24',  state:'out', who:'u1', ret:'22 มิ.ย.' },
-      { id:'e14', cat:'Wetplate', name:'Darkbox ล้างภาพ portable',    sn:'WP-DB-01',  state:'in',  who:null, ret:null },
-    ],
-  },
 };
 
   </script>
@@ -381,8 +319,8 @@ function SectionHead({ title, sub, right }) {
   return (
     <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 10, padding: '0 4px' }}>
       <div>
-        <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: -0.3, color: TC.ink }}>{title}</div>
-        {sub && <div style={{ fontSize: 12, color: TC.muted, marginTop: 2 }}>{sub}</div>}
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.3, color: TC.ink }}>{title}</div>
+        {sub && <div style={{ fontSize: 14, color: TC.muted, marginTop: 2 }}>{sub}</div>}
       </div>
       {right}
     </div>
@@ -416,7 +354,7 @@ function Pill({ children, kind = 'soft', onClick, color, icon, style = {} }) {
       display:'inline-flex', alignItems:'center', gap: 6,
       padding: '8px 14px', borderRadius: 999, border: p.border || 'none',
       background: color ? color : p.bg, color: p.fg,
-      font:'inherit', fontSize: 13, fontWeight: 600, cursor:'pointer',
+      font:'inherit', fontSize: 15, fontWeight: 600, cursor:'pointer',
       letterSpacing: 0.1,
       ...style,
     }}>
@@ -456,7 +394,7 @@ function TabBar({ active, onChange, onAdd, role }) {
                 color: on ? TC.green : TC.ink2, cursor:'pointer',
               }}>
                 {t.i}
-                <span style={{ fontSize: 10.5, fontWeight: 600 }}>{t.l}</span>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>{t.l}</span>
               </button>
             );
           })}
@@ -502,8 +440,8 @@ function ScreenHeader({ title, sub, onBack, trailing, accent, sticky = true }) {
         ) : <div />}
         <div style={{ display:'flex', gap: 6 }}>{trailing}</div>
       </div>
-      <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -0.8, color: TC.ink, lineHeight: 1.1 }}>{title}</div>
-      {sub && <div style={{ fontSize: 13, color: TC.muted, marginTop: 4 }}>{sub}</div>}
+      <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: -0.8, color: TC.ink, lineHeight: 1.1 }}>{title}</div>
+      {sub && <div style={{ fontSize: 15, color: TC.muted, marginTop: 4 }}>{sub}</div>}
     </div>
   );
 }
@@ -548,10 +486,10 @@ function Sheet({ open, onClose, title, children, height = '78%' }) {
         </div>
         {title && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '8px 18px 14px' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: TC.ink }}>{title}</div>
+            <div style={{ fontSize: 21, fontWeight: 700, color: TC.ink }}>{title}</div>
             <button onClick={onClose} style={{
               background: 'rgba(27,26,23,0.07)', border:'none', borderRadius: 999,
-              width: 30, height: 30, fontSize: 16, color: TC.muted, cursor:'pointer', fontWeight: 700,
+              width: 30, height: 30, fontSize: 18, color: TC.muted, cursor:'pointer', fontWeight: 700,
             }}>✕</button>
           </div>
         )}
@@ -575,7 +513,7 @@ function Toast({ msg }) {
     }}>
       <Glass radius={999} style={{}}>
         <div style={{ padding: '10px 18px', display:'flex', alignItems:'center', gap: 8,
-                      fontSize: 13, fontWeight: 600, color: TC.ink }}>
+                      fontSize: 15, fontWeight: 600, color: TC.ink }}>
           <span style={{ color: TC.green }}>{I.check}</span>{msg}
         </div>
       </Glass>
@@ -599,7 +537,7 @@ function Segmented({ options, value, onChange }) {
           <button key={o.value} onClick={() => onChange(o.value)} style={{
             background: on ? TC.card : 'transparent', color: on ? TC.ink : TC.ink2,
             border:'none', padding: '7px 14px', borderRadius: 999,
-            fontSize: 12.5, fontWeight: 600, cursor:'pointer',
+            fontSize: 14, fontWeight: 600, cursor:'pointer',
             boxShadow: on ? '0 1px 2px rgba(27,26,23,0.08)' : 'none',
             transition: 'background 180ms ease',
           }}>{o.label}</button>
@@ -621,7 +559,7 @@ function StatusBar({ time = '9:41', dark = false }) {
       display:'flex', justifyContent:'space-between', alignItems:'center',
       padding: '18px 28px 0', pointerEvents:'none',
     }}>
-      <div style={{ fontSize: 15.5, fontWeight: 600, color: c, letterSpacing: 0.2 }}>{time}</div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: c, letterSpacing: 0.2 }}>{time}</div>
       <div style={{ display:'flex', gap: 6, alignItems:'center' }}>
         <svg width="16" height="11" viewBox="0 0 16 11"><path d="M0 6h2v5H0zM4 4h2v7H4zM8 2h2v9H8zM12 0h2v11h-2z" fill={c}/></svg>
         <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3a6 6 0 014.2 1.7l1-1A7.5 7.5 0 007 1.5 7.5 7.5 0 001.8 3.7l1 1A6 6 0 017 3zM7 6c1 0 2 .4 2.7 1l1-1A4.5 4.5 0 007 4.5c-1.2 0-2.3.5-3.2 1.4l1 1A3.5 3.5 0 017 6zm0 2a1.2 1.2 0 100 2.4A1.2 1.2 0 007 8z" fill={c}/></svg>
@@ -1226,10 +1164,10 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
             <div style={{ display:'flex', alignItems:'center', gap: 10 }}>
               <window.Avatar user={role} size={36} ring />
               <div>
-                <div style={{ fontSize: 11, opacity: 0.75, fontWeight: 500, letterSpacing: 0.4, textTransform:'uppercase' }}>
+                <div style={{ fontSize: 13, opacity: 0.75, fontWeight: 500, letterSpacing: 0.4, textTransform:'uppercase' }}>
                   {data.brand.name}
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>สวัสดี, {role.name.split(' ')[0]}</div>
+                <div style={{ fontSize: 17, fontWeight: 700 }}>สวัสดี, {role.name.split(' ')[0]}</div>
               </div>
             </div>
             <div style={{ display:'flex', gap: 8 }}>
@@ -1245,10 +1183,10 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
             </div>
           </div>
 
-          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15 }}>
+          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15 }}>
             {role.isLead ? 'มี 3 งานรอ approve' : role.isBoss ? `มี ${window.APP_DATA.project.approvals.filter(a=>a.urgent).length} เรื่องด่วน` : `คุณมี ${myTasks.length} งานวันนี้`}
           </div>
-          <div style={{ opacity: 0.7, fontSize: 13, marginTop: 4 }}>
+          <div style={{ opacity: 0.7, fontSize: 15, marginTop: 4 }}>
             Collection {p.code} · เหลือ {p.daysLeft} วันก่อน launch
           </div>
 
@@ -1262,9 +1200,9 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
             ].map(k => (
               <window.Glass key={k.lab} radius={18} tint="rgba(255,255,255,0.16)" border>
                 <div style={{ padding: 10, color:'#fff' }}>
-                  <div style={{ fontSize: 10, opacity:0.7, fontWeight:600, textTransform:'uppercase', letterSpacing: 0.4 }}>{k.lab}</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, marginTop: 2 }}>{k.val}</div>
-                  <div style={{ fontSize: 10, opacity:0.7 }}>{k.sub}</div>
+                  <div style={{ fontSize: 12, opacity:0.7, fontWeight:600, textTransform:'uppercase', letterSpacing: 0.4 }}>{k.lab}</div>
+                  <div style={{ fontSize: 21, fontWeight: 800, marginTop: 2 }}>{k.val}</div>
+                  <div style={{ fontSize: 12, opacity:0.7 }}>{k.sub}</div>
                 </div>
               </window.Glass>
             ))}
@@ -1280,30 +1218,30 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
               width: 56, height: 56, borderRadius: 16,
               background:`linear-gradient(135deg, ${window.TC.green}, ${window.TC.greenDk})`,
               color:'#fff', display:'flex', alignItems:'center', justifyContent:'center',
-              fontWeight: 800, fontSize: 14, letterSpacing: 0.2, flexShrink: 0,
+              fontWeight: 800, fontSize: 16, letterSpacing: 0.2, flexShrink: 0,
               boxShadow:'0 8px 20px rgba(31,138,91,0.35)',
             }}>{p.code}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 2 }}>
                 <window.Tag kind="doing" sm>Active</window.Tag>
-                <span style={{ fontSize: 11, color: window.TC.muted, fontWeight: 600 }}>· FW26</span>
+                <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· FW26</span>
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: window.TC.muted, marginTop: 1 }}>{p.sub}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{p.name}</div>
+              <div style={{ fontSize: 14, color: window.TC.muted, marginTop: 1 }}>{p.sub}</div>
             </div>
             <window.Ring pct={p.progress} size={50} stroke={5} color={window.TC.green}>
-              <span style={{ fontSize: 11 }}>{p.progress}%</span>
+              <span style={{ fontSize: 13 }}>{p.progress}%</span>
             </window.Ring>
           </div>
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: `0.5px solid ${window.TC.hair}`,
                         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
               <window.AvatarStack ids={p.coreTeam || ['u1','u2','u3','u4','u5','u6','u7']} size={22} />
-              <span style={{ fontSize: 11.5, color: window.TC.muted, fontWeight: 600 }}>· {p.daysLeft} days left</span>
+              <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· {p.daysLeft} days left</span>
             </div>
             <button onClick={() => go('project', { id: p.id })} style={{
               background: window.TC.ink, color:'#fff', border:'none', borderRadius: 999,
-              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor:'pointer',
+              padding: '8px 14px', fontSize: 14, fontWeight: 700, cursor:'pointer',
               display:'inline-flex', alignItems:'center', gap: 4,
             }}>Open <span style={{ display:'inline-flex' }}>{window.I.chev}</span></button>
           </div>
@@ -1326,8 +1264,8 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
                       display:'flex', alignItems:'center', justifyContent:'center', flexShrink: 0,
                     }}>{a.urgent ? window.I.flame : window.I.check2}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: window.TC.ink, letterSpacing: -0.1 }}>{a.what}</div>
-                      <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2, display:'flex', alignItems:'center', gap: 6 }}>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: window.TC.ink, letterSpacing: -0.1 }}>{a.what}</div>
+                      <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2, display:'flex', alignItems:'center', gap: 6 }}>
                         ส่งโดย {window.userById(a.from)?.name} · {a.size} · {a.sent}
                       </div>
                     </div>
@@ -1393,8 +1331,8 @@ function QuickTile({ icon, label, sub, color, soft, onClick }) {
         background: soft, color: color,
         display:'flex', alignItems:'center', justifyContent:'center', marginBottom: 10,
       }}>{icon}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>{label}</div>
-      <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 1 }}>{sub}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>{label}</div>
+      <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 1 }}>{sub}</div>
     </button>
   );
 }
@@ -1416,8 +1354,8 @@ function TaskRow({ t, onClick }) {
             </window.Tag>
             {t.priority === 'high' && <span style={{ color: window.TC.rose, display:'inline-flex' }}>{window.I.flame}</span>}
           </div>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: window.TC.ink, lineHeight: 1.3 }}>{t.t}</div>
-          <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 3 }}>{t.due}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: window.TC.ink, lineHeight: 1.3 }}>{t.t}</div>
+          <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 3 }}>{t.due}</div>
         </div>
         <window.Avatar user={u} size={26} />
       </div>
@@ -1434,10 +1372,10 @@ function TaskCardH({ t, onClick }) {
         <window.Tag kind={t.status === 'review' ? 'review' : t.status === 'doing' ? 'doing' : 'todo'} sm>{t.tag}</window.Tag>
         {t.priority === 'high' && <span style={{ color: window.TC.rose, display:'inline-flex' }}>{window.I.flame}</span>}
       </div>
-      <div style={{ fontSize: 13.5, fontWeight: 600, color: window.TC.ink, lineHeight: 1.35, flex: 1,
+      <div style={{ fontSize: 16, fontWeight: 600, color: window.TC.ink, lineHeight: 1.35, flex: 1,
                     display:'-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{t.t}</div>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop: 10 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: window.TC.muted }}>{t.due}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: window.TC.muted }}>{t.due}</span>
         <window.Avatar user={u} size={24} />
       </div>
     </window.Card>
@@ -1496,21 +1434,21 @@ function ScreenProjects({ go, role, openAdd }) {
             }}>
               <div style={{ position:'absolute', top: 0, right: 0, width: 120, height: 120,
                             borderRadius: '50%', background:'radial-gradient(circle, rgba(255,255,255,0.2), transparent 70%)' }} />
-              <div style={{ fontSize: 10.5, fontWeight: 700, color:'#fff', opacity:0.85, letterSpacing: 1, textTransform:'uppercase' }}>{pr.code}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color:'#fff', opacity:0.85, letterSpacing: 1, textTransform:'uppercase' }}>{pr.code}</div>
             </div>
             <div style={{ padding: 14 }}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap: 12 }}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize: 15.5, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{pr.name}</div>
-                  <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2 }}>{pr.sub}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{pr.name}</div>
+                  <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>{pr.sub}</div>
                 </div>
                 <window.Ring pct={pr.progress} size={44} stroke={4.5} color={pr.cover}>
-                  <span style={{ fontSize: 10 }}>{pr.progress}%</span>
+                  <span style={{ fontSize: 12 }}>{pr.progress}%</span>
                 </window.Ring>
               </div>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop: 12 }}>
                 <window.AvatarStack ids={['u1','u2','u3','u4','u5']} size={20} />
-                <span style={{ fontSize: 11, fontWeight: 600, color: window.TC.muted }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: window.TC.muted }}>
                   {pr._archived ? 'launched' : `${pr.daysLeft} d left`}
                 </span>
               </div>
@@ -1562,10 +1500,10 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
         <div style={{ position:'relative', zIndex: 1 }}>
           <div style={{ display:'flex', gap: 8, marginBottom: 8 }}>
             <window.Tag kind="doing" sm>Active</window.Tag>
-            <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{p.code} · FW26</span>
+            <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.8 }}>{p.code} · FW26</span>
           </div>
-          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15 }}>{p.name}</div>
-          <div style={{ fontSize: 13, opacity: 0.75, marginTop: 4 }}>{p.sub}</div>
+          <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15 }}>{p.name}</div>
+          <div style={{ fontSize: 15, opacity: 0.75, marginTop: 4 }}>{p.sub}</div>
 
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap: 1, marginTop: 18,
                         borderTop:'0.5px solid rgba(255,255,255,0.2)', paddingTop: 14, paddingBottom: 16 }}>
@@ -1591,7 +1529,7 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
             return (
               <button key={x.k} onClick={() => setTab(x.k)} style={{
                 flex: 1, background: on ? window.TC.greenSoft : 'transparent', color: on ? window.TC.greenDk : window.TC.ink2,
-                border:'none', borderRadius: 14, padding: '10px 4px', fontSize: 12.5, fontWeight: 700, cursor:'pointer',
+                border:'none', borderRadius: 14, padding: '10px 4px', fontSize: 14, fontWeight: 700, cursor:'pointer',
               }}>{x.l}</button>
             );
           })}
@@ -1605,7 +1543,7 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
             {p.today.map(t => <TaskRow key={t.id} t={t} onClick={() => openTask(t)} />)}
             <button onClick={() => go('kanban')} className="tc-tap" style={{
               marginTop: 8, padding: 14, borderRadius: 18, border:`1.5px dashed ${window.TC.hair}`,
-              background:'transparent', color: window.TC.muted, fontWeight: 600, fontSize: 13, cursor:'pointer',
+              background:'transparent', color: window.TC.muted, fontWeight: 600, fontSize: 15, cursor:'pointer',
             }}>เปิด Kanban Board →</button>
           </div>
         )}
@@ -1620,13 +1558,13 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
                       <window.Avatar user={u} size={42} />
                       <div style={{ flex: 1 }}>
                         <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
-                          <span style={{ fontSize: 14.5, fontWeight: 700, color: window.TC.ink }}>{u.name}</span>
+                          <span style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink }}>{u.name}</span>
                           {u.isBoss && <window.Tag kind="next" sm>Boss</window.Tag>}
                           {u.isLead && <window.Tag kind="done" sm>Lead</window.Tag>}
                         </div>
-                        <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2 }}>{u.role}</div>
+                        <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>{u.role}</div>
                       </div>
-                      <div style={{ display:'flex', alignItems:'center', gap: 6, fontSize: 11, color: u.online ? window.TC.green : window.TC.muted, fontWeight: 600 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap: 6, fontSize: 13, color: u.online ? window.TC.green : window.TC.muted, fontWeight: 600 }}>
                         <span style={{ width: 8, height: 8, borderRadius: 999, background: u.online ? window.TC.green : '#C9C5BA' }} />
                         {u.online ? 'online' : 'offline'}
                       </div>
@@ -1648,16 +1586,16 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
                       <div style={{
                         width: 42, height: 42, borderRadius: 999, background: f.tint, color:'#fff',
                         display:'inline-flex', alignItems:'center', justifyContent:'center',
-                        fontWeight: 700, fontSize: 14, flexShrink: 0,
+                        fontWeight: 700, fontSize: 16, flexShrink: 0,
                         boxShadow:'0 0 0 1.5px rgba(255,255,255,0.9)',
                       }}>{f.short}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>{f.name}</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>{f.name}</span>
                           <window.Tag kind="next" sm>Freelance</window.Tag>
                         </div>
-                        <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2 }}>{f.role} · {f.rate}</div>
-                        <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 2, fontFamily:'ui-monospace, monospace' }}>{f.contact}</div>
+                        <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>{f.role} · {f.rate}</div>
+                        <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2, fontFamily:'ui-monospace, monospace' }}>{f.contact}</div>
                       </div>
                     </div>
                   </window.Card>
@@ -1665,7 +1603,7 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
                 {role.isLead && (
                   <button onClick={() => openAdd('freelance')} className="tc-tap" style={{
                     padding: 14, borderRadius: 18, border:`1.5px dashed ${window.TC.hair}`,
-                    background:'transparent', color: window.TC.green, fontWeight: 700, fontSize: 13, cursor:'pointer',
+                    background:'transparent', color: window.TC.green, fontWeight: 700, fontSize: 15, cursor:'pointer',
                     display:'flex', alignItems:'center', justifyContent:'center', gap: 6,
                   }}>+ เพิ่ม freelance เข้า project</button>
                 )}
@@ -1683,8 +1621,8 @@ window.ScreenProject = ScreenProject;
 function Stat({ label, val }) {
   return (
     <div style={{ paddingRight: 8 }}>
-      <div style={{ fontSize: 10, fontWeight: 600, opacity: 0.65, letterSpacing: 0.5, textTransform:'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, marginTop: 3 }}>{val}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.65, letterSpacing: 0.5, textTransform:'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, marginTop: 3 }}>{val}</div>
     </div>
   );
 }
@@ -1745,7 +1683,7 @@ function LinksTab({ role }) {
       {role.isLead && !adding && (
         <button onClick={() => setAdding(true)} className="tc-tap" style={{
           padding: '14px 16px', borderRadius: 18, border: `1.5px dashed ${window.TC.hair}`,
-          background:'transparent', color: window.TC.green, fontWeight: 700, fontSize: 13.5,
+          background:'transparent', color: window.TC.green, fontWeight: 700, fontSize: 16,
           cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap: 6,
         }}>
           <span style={{ display:'inline-flex' }}>{window.I.plus}</span> เพิ่มลิงก์ (Drive / Figma / Notion …)
@@ -1753,7 +1691,7 @@ function LinksTab({ role }) {
       )}
       {adding && (
         <window.Card pad={14} radius={20}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: window.TC.ink, marginBottom: 10 }}>วางลิงก์</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink, marginBottom: 10 }}>วางลิงก์</div>
           <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://…" style={inputS} />
           <div style={{ height: 8 }} />
           <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="ชื่อ (ไม่ใส่ก็ได้)" style={inputS} />
@@ -1779,14 +1717,14 @@ function LinksTab({ role }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 3 }}>
                   <span style={{
-                    fontSize: 10, fontWeight: 700, color: k.tint, background: k.soft,
+                    fontSize: 12, fontWeight: 700, color: k.tint, background: k.soft,
                     padding: '1.5px 7px', borderRadius: 4, letterSpacing: 0.3, textTransform:'uppercase',
                   }}>{k.label}</span>
-                  <span style={{ fontSize: 10.5, fontWeight: 600, color: window.TC.muted }}>· {l.tag}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: window.TC.muted }}>· {l.tag}</span>
                   {l.approved && <window.Tag kind="done" sm>Approved</window.Tag>}
                 </div>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: window.TC.ink, letterSpacing: -0.1, lineHeight: 1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{l.title}</div>
-                <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 3, display:'flex', alignItems:'center', gap: 6 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: window.TC.ink, letterSpacing: -0.1, lineHeight: 1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{l.title}</div>
+                <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 3, display:'flex', alignItems:'center', gap: 6 }}>
                   <span style={{ fontFamily:'ui-monospace, monospace', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth: 160 }}>{domain(l.url)}</span>
                   <span>· {u?.name} · {l.when}</span>
                 </div>
@@ -1807,11 +1745,11 @@ function LinksTab({ role }) {
 
 const inputS = {
   width:'100%', boxSizing:'border-box', padding:'12px 14px', border:'none', borderRadius: 12,
-  background: window.TC.bg, fontSize: 13, color: window.TC.ink, outline:'none',
+  background: window.TC.bg, fontSize: 15, color: window.TC.ink, outline:'none',
   boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)',
 };
-const btnGhost = { padding:'9px 14px', borderRadius: 999, border:'none', background:'rgba(27,26,23,0.07)', color: window.TC.ink, fontSize: 12.5, fontWeight: 700, cursor:'pointer' };
-const btnPrimary = { padding:'9px 16px', borderRadius: 999, border:'none', background: window.TC.green, color:'#fff', fontSize: 12.5, fontWeight: 700, cursor:'pointer' };
+const btnGhost = { padding:'9px 14px', borderRadius: 999, border:'none', background:'rgba(27,26,23,0.07)', color: window.TC.ink, fontSize: 14, fontWeight: 700, cursor:'pointer' };
+const btnPrimary = { padding:'9px 16px', borderRadius: 999, border:'none', background: window.TC.green, color:'#fff', fontSize: 14, fontWeight: 700, cursor:'pointer' };
 
 function PhaseTimeline({ p, role, go }) {
   return (
@@ -1844,11 +1782,11 @@ function PhaseTimeline({ p, role, go }) {
                   <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap: 10 }}>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 3 }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.5, textTransform:'uppercase' }}>{String(i+1).padStart(2,'0')} · {ph.en}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.5, textTransform:'uppercase' }}>{String(i+1).padStart(2,'0')} · {ph.en}</span>
                         <window.Tag kind={ph.status} sm />
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{ph.th}</div>
-                      <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 4, display:'flex', alignItems:'center', gap: 8 }}>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{ph.th}</div>
+                      <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 4, display:'flex', alignItems:'center', gap: 8 }}>
                         <span>{ph.dates}</span>
                         {u && (
                           <span style={{ display:'inline-flex', alignItems:'center', gap: 4 }}>
@@ -1860,7 +1798,7 @@ function PhaseTimeline({ p, role, go }) {
                   </div>
                   {!isDone && ph.pct > 0 && <div style={{ marginTop: 10 }}><window.Bar pct={ph.pct} color={window.TC.green} /></div>}
                   {ph.key === 'shoot' && (
-                    <div style={{ marginTop: 12, padding: 10, borderRadius: 14, background: window.TC.amberSoft, fontSize: 11.5, color: '#7A5A12', fontWeight: 600, lineHeight: 1.4 }}>
+                    <div style={{ marginTop: 12, padding: 10, borderRadius: 14, background: window.TC.amberSoft, fontSize: 13, color: '#7A5A12', fontWeight: 600, lineHeight: 1.4 }}>
                       ⚠︎ Pre-flight checklist: sample พร้อม 9/14 · size check · กล้องจอง 2/4 · location confirm
                     </div>
                   )}
@@ -1924,9 +1862,9 @@ function ScreenKanban({ go, role, openAdd, openTask }) {
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '4px 6px 12px' }}>
                 <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
                   <span style={{ width: 10, height: 10, borderRadius: 999, background: c.color }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>{c.l}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>{c.l}</span>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: c.color, background: c.soft,
+                    fontSize: 13, fontWeight: 700, color: c.color, background: c.soft,
                     padding: '2px 8px', borderRadius: 999,
                   }}>{list.length}</span>
                 </div>
@@ -1946,16 +1884,16 @@ function ScreenKanban({ go, role, openAdd, openTask }) {
                         <window.Tag kind={t.status === 'done' ? 'done' : t.status} sm>{t.tag}</window.Tag>
                         {t.priority === 'high' && <span style={{ color: window.TC.rose, display:'inline-flex' }}>{window.I.flame}</span>}
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: window.TC.ink, lineHeight: 1.35, marginBottom: 8 }}>{t.t}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: window.TC.ink, lineHeight: 1.35, marginBottom: 8 }}>{t.t}</div>
                       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                        <span style={{ fontSize: 11, color: window.TC.muted, fontWeight: 600 }}>{t.due}</span>
+                        <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>{t.due}</span>
                         <window.Avatar user={u} size={22} />
                       </div>
                     </div>
                   );
                 })}
                 {list.length === 0 && (
-                  <div style={{ padding: 18, textAlign:'center', fontSize: 12, color: window.TC.muted, fontStyle:'italic' }}>
+                  <div style={{ padding: 18, textAlign:'center', fontSize: 14, color: window.TC.muted, fontStyle:'italic' }}>
                     ไม่มีงานในคอลัมน์นี้
                   </div>
                 )}
@@ -2005,8 +1943,8 @@ function ScreenTools({ go, role }) {
               display:'flex', alignItems:'center', justifyContent:'center',
             }}>{t.icon}</div>
             <div>
-              <div style={{ fontSize: 14.5, fontWeight: 700, color: window.TC.ink, marginBottom: 2 }}>{t.label}</div>
-              <div style={{ fontSize: 11.5, color: window.TC.muted, lineHeight: 1.35 }}>{t.sub}</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink, marginBottom: 2 }}>{t.label}</div>
+              <div style={{ fontSize: 13, color: window.TC.muted, lineHeight: 1.35 }}>{t.sub}</div>
             </div>
           </button>
         ))}
@@ -2022,10 +1960,10 @@ function ScreenTools({ go, role }) {
             }}>{window.I.line}</div>
             <div style={{ flex: 1 }}>
               <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>LINE notifications</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>LINE notifications</span>
                 <window.Tag kind="done" sm>Live</window.Tag>
               </div>
-              <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2, lineHeight: 1.4 }}>
+              <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2, lineHeight: 1.4 }}>
                 ทีมจะได้รับแจ้งเตือน task / approval ผ่าน LINE OA · 7 users
               </div>
             </div>
@@ -2082,7 +2020,7 @@ function ScreenEquipment({ go, role, toast, openAdd }) {
             return (
               <button key={c} onClick={() => setCat(c)} style={{
                 background: on ? window.TC.ink : window.TC.card, color: on ? '#fff' : window.TC.ink,
-                border:'none', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor:'pointer',
+                border:'none', borderRadius: 999, padding: '8px 14px', fontSize: 14, fontWeight: 600, cursor:'pointer',
                 boxShadow: on ? 'none' : '0 1px 2px rgba(27,26,23,0.05)', whiteSpace:'nowrap',
               }}>{c}</button>
             );
@@ -2106,10 +2044,10 @@ function ScreenEquipment({ go, role, toast, openAdd }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 3 }}>
                     <window.Tag kind={it.state} sm />
-                    <span style={{ fontSize: 11, fontWeight: 600, color: window.TC.muted }}>{it.cat}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: window.TC.muted }}>{it.cat}</span>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1 }}>{it.name}</div>
-                  <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 3, fontFamily:'ui-monospace, SF Mono, Menlo, monospace' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1 }}>{it.name}</div>
+                  <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 3, fontFamily:'ui-monospace, SF Mono, Menlo, monospace' }}>
                     SN: {it.sn}
                     {it.who && <> · ใช้โดย {u.name} · คืน {it.ret}</>}
                     {it.state === 'maint' && <> · {it.ret}</>}
@@ -2118,7 +2056,7 @@ function ScreenEquipment({ go, role, toast, openAdd }) {
                 {it.state === 'in' && (
                   <button onClick={() => toast(`จองแล้ว: ${it.name}`)} style={{
                     background: window.TC.ink, color:'#fff', border:'none', borderRadius: 999,
-                    padding: '6px 12px', fontSize: 11.5, fontWeight: 700, cursor:'pointer',
+                    padding: '6px 12px', fontSize: 13, fontWeight: 700, cursor:'pointer',
                   }}>จอง</button>
                 )}
                 {it.state === 'out' && u && <window.Avatar user={u} size={28} />}
@@ -2126,9 +2064,9 @@ function ScreenEquipment({ go, role, toast, openAdd }) {
 
               {it.state === 'out' && (
                 <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 12, background: window.TC.bg,
-                              fontSize: 11.5, color: window.TC.ink2, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                              fontSize: 13, color: window.TC.ink2, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <span>กำหนดคืน {it.ret}</span>
-                  {role.isLead && <button style={{ background:'none', border:'none', color: window.TC.green, fontWeight: 700, fontSize: 12, cursor:'pointer' }}>มาร์คคืน</button>}
+                  {role.isLead && <button style={{ background:'none', border:'none', color: window.TC.green, fontWeight: 700, fontSize: 14, cursor:'pointer' }}>มาร์คคืน</button>}
                 </div>
               )}
             </window.Card>
@@ -2146,8 +2084,8 @@ function SummaryChip({ label, val, bg, fg }) {
       background: bg, color: fg, borderRadius: 18, padding: '12px 12px',
       display:'flex', flexDirection:'column', gap: 2,
     }}>
-      <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3 }}>{val}</div>
-      <div style={{ fontSize: 10.5, fontWeight: 700, opacity:0.8, textTransform:'uppercase', letterSpacing: 0.4 }}>{label}</div>
+      <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.3 }}>{val}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, opacity:0.8, textTransform:'uppercase', letterSpacing: 0.4 }}>{label}</div>
     </div>
   );
 }
@@ -2204,10 +2142,10 @@ function ScreenFileName({ go, role, toast, presetProject }) {
           marginBottom: 18,
         }}>
           <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 10, opacity: 0.6 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform:'uppercase' }}>Filename preview</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform:'uppercase' }}>Filename preview</span>
           </div>
           <div style={{
-            fontFamily:'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 13.5, lineHeight: 1.45,
+            fontFamily:'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 16, lineHeight: 1.45,
             fontWeight: 600, wordBreak:'break-all',
           }}>
             <Token>{project}</Token>_<Token c="#D4A24C">{date}</Token>_<Token c="#7A5AE0">{typeCode}-S{scene}</Token>_<Token c="#5B9BD5">{piece}</Token>_<Token c="#8AD8B5">{resolution}</Token>_<Token c="#E26A4A">{model || 'NONE'}</Token>_<Token c="#1F8A5B">{photographer}</Token>_<Token c="#D4456C">{version}</Token>.<Token>{ext}</Token>
@@ -2215,13 +2153,13 @@ function ScreenFileName({ go, role, toast, presetProject }) {
           <button onClick={() => { navigator.clipboard?.writeText(result); toast('Copied to clipboard'); }}
                   style={{
             marginTop: 14, background:'rgba(255,255,255,0.16)', border:'none', borderRadius: 999,
-            padding:'10px 14px', color:'#fff', fontSize: 12.5, fontWeight: 700, cursor:'pointer',
+            padding:'10px 14px', color:'#fff', fontSize: 14, fontWeight: 700, cursor:'pointer',
             display:'inline-flex', alignItems:'center', gap: 6,
           }}>{window.I.copy} Copy</button>
         </window.Card>
 
         {/* Pattern legend */}
-        <div style={{ fontSize: 10.5, color: window.TC.muted, fontWeight: 600, marginBottom: 12, letterSpacing: 0.3, textTransform:'uppercase' }}>
+        <div style={{ fontSize: 12, color: window.TC.muted, fontWeight: 600, marginBottom: 12, letterSpacing: 0.3, textTransform:'uppercase' }}>
           Pattern · PROJECT_DATE_TYPE-SCENE_PIECE_RES_MODEL_PHOTOG_VER.EXT
         </div>
 
@@ -2259,14 +2197,14 @@ function ScreenFileName({ go, role, toast, presetProject }) {
               {types.map(t => (
                 <div key={t.code} style={{ display:'flex', alignItems:'center', gap: 10 }}>
                   <span style={{
-                    fontFamily:'ui-monospace, monospace', fontSize: 10.5, fontWeight: 700, color: window.TC.plum,
+                    fontFamily:'ui-monospace, monospace', fontSize: 12, fontWeight: 700, color: window.TC.plum,
                     background: window.TC.plumSoft, padding:'3px 7px', borderRadius: 6, minWidth: 70, textAlign:'center',
                   }}>{t.code}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: window.TC.ink, fontWeight: 600 }}>{t.label}</div>
-                    <div style={{ fontSize: 10.5, color: window.TC.muted }}>{t.note}</div>
+                    <div style={{ fontSize: 14, color: window.TC.ink, fontWeight: 600 }}>{t.label}</div>
+                    <div style={{ fontSize: 12, color: window.TC.muted }}>{t.note}</div>
                   </div>
-                  <span style={{ fontFamily:'ui-monospace, monospace', fontSize: 10.5, fontWeight: 700, color: window.TC.muted }}>{t.res}</span>
+                  <span style={{ fontFamily:'ui-monospace, monospace', fontSize: 12, fontWeight: 700, color: window.TC.muted }}>{t.res}</span>
                 </div>
               ))}
             </div>
@@ -2284,7 +2222,7 @@ function Token({ children, c }) {
 function FormField({ label, children }) {
   return (
     <label style={{ display:'block' }}>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', marginBottom: 6 }}>{label}</div>
       {children}
     </label>
   );
@@ -2294,7 +2232,7 @@ function Input({ value, onChange, mono = false }) {
     <input value={value} onChange={e => onChange(e.target.value)} style={{
       width:'100%', boxSizing:'border-box',
       padding: '12px 14px', border:'none', borderRadius: 14,
-      background: window.TC.card, fontSize: 14, color: window.TC.ink,
+      background: window.TC.card, fontSize: 16, color: window.TC.ink,
       fontFamily: mono ? 'ui-monospace, monospace' : 'inherit',
       boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)',
       outline:'none',
@@ -2307,7 +2245,7 @@ function Select({ value, onChange, options }) {
       <select value={value} onChange={e => onChange(e.target.value)} style={{
         width:'100%', appearance:'none', WebkitAppearance:'none',
         padding: '12px 38px 12px 14px', border:'none', borderRadius: 14,
-        background: window.TC.card, fontSize: 14, color: window.TC.ink,
+        background: window.TC.card, fontSize: 16, color: window.TC.ink,
         fontFamily:'ui-monospace, monospace', fontWeight: 600,
         boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)', outline:'none', cursor:'pointer',
       }}>
@@ -2390,20 +2328,20 @@ function ScreenApproval({ go, role, toast, openAdd }) {
                     {it.status === 'approved' ? <window.Tag kind="done" sm>Approved</window.Tag> :
                      it.urgent ? <window.Tag kind="blocked" sm>Urgent</window.Tag> :
                                  <window.Tag kind="review" sm>Pending</window.Tag>}
-                    <span style={{ fontSize: 11, color: window.TC.muted, fontWeight: 600 }}>{it.size}</span>
+                    <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>{it.size}</span>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1, lineHeight: 1.3 }}>{it.what}</div>
-                  <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 6, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1, lineHeight: 1.3 }}>{it.what}</div>
+                  <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 6, lineHeight: 1.4 }}>
                     {it.note.slice(0, 80)}{it.note.length > 80 ? '…' : ''}
                   </div>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop: 10 }}>
-                    <span style={{ fontSize: 11, color: window.TC.muted }}>
+                    <span style={{ fontSize: 13, color: window.TC.muted }}>
                       {it.status === 'approved' ? `approved ${it.approvedAt}` : `sent ${it.sent}`}
                     </span>
                     <div style={{ display:'flex', gap: 4 }}>
                       {it.attachments?.slice(0, 3).map(a => (
                         <span key={a.url || a.title} style={{
-                          padding: '3px 8px', borderRadius: 6, background: window.TC.bg, fontSize: 10.5,
+                          padding: '3px 8px', borderRadius: 6, background: window.TC.bg, fontSize: 12,
                           color: window.TC.ink2, fontWeight: 600, display:'inline-flex', alignItems:'center', gap: 4,
                         }}>
                           {(window.LINK_KINDS[a.kind] || window.LINK_KINDS.url).label}
@@ -2440,21 +2378,21 @@ function ApprovalDetail({ it, role, onAct }) {
       <window.Card pad={14} radius={20}>
         <div style={{ display:'flex', alignItems:'center', gap: 10, marginBottom: 12 }}>
           {it.status === 'approved' ? <window.Tag kind="done">Approved</window.Tag> : it.urgent ? <window.Tag kind="blocked">Urgent</window.Tag> : <window.Tag kind="review">Pending</window.Tag>}
-          <span style={{ fontSize: 12, color: window.TC.muted, fontWeight: 600 }}>{it.size}</span>
+          <span style={{ fontSize: 14, color: window.TC.muted, fontWeight: 600 }}>{it.size}</span>
         </div>
-        <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{it.what}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{it.what}</div>
 
         <div style={{ marginTop: 14, padding: 12, borderRadius: 14, background: window.TC.bg }}>
           <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 6 }}>
             <window.Avatar user={u} size={22} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: window.TC.ink }}>{u.name}</span>
-            <span style={{ fontSize: 11, color: window.TC.muted }}>· {it.sent}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>{u.name}</span>
+            <span style={{ fontSize: 13, color: window.TC.muted }}>· {it.sent}</span>
           </div>
-          <div style={{ fontSize: 13, color: window.TC.ink2, lineHeight: 1.5 }}>{it.note}</div>
+          <div style={{ fontSize: 15, color: window.TC.ink2, lineHeight: 1.5 }}>{it.note}</div>
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', marginBottom: 8 }}>Attachments ({it.attachments?.length || 0})</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', marginBottom: 8 }}>Attachments ({it.attachments?.length || 0})</div>
           <div style={{ display:'grid', gap: 6 }}>
             {it.attachments?.map(a => {
               const k = window.LINK_KINDS[a.kind] || window.LINK_KINDS.url;
@@ -2468,10 +2406,10 @@ function ApprovalDetail({ it, role, onAct }) {
                                 display:'flex', alignItems:'center', justifyContent:'center', flexShrink: 0 }}>{k.svg}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
-                      <span style={{ fontSize: 9.5, fontWeight: 700, color: k.tint, background: k.soft, padding:'1px 6px', borderRadius: 4, letterSpacing: 0.3, textTransform:'uppercase' }}>{k.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: k.tint, background: k.soft, padding:'1px 6px', borderRadius: 4, letterSpacing: 0.3, textTransform:'uppercase' }}>{k.label}</span>
                     </div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: window.TC.ink, marginTop: 2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.title}</div>
-                    <div style={{ fontSize: 10.5, color: window.TC.muted, fontFamily:'ui-monospace, monospace', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{domain}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: window.TC.ink, marginTop: 2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.title}</div>
+                    <div style={{ fontSize: 12, color: window.TC.muted, fontFamily:'ui-monospace, monospace', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{domain}</div>
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: window.TC.muted }}><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </a>
@@ -2486,21 +2424,21 @@ function ApprovalDetail({ it, role, onAct }) {
         <div style={{ display:'flex', gap: 10, marginTop: 16 }}>
           <button onClick={() => onAct('revise')} style={{
             flex: 1, padding: '14px', borderRadius: 16, border:`1.5px solid ${window.TC.hair}`,
-            background: window.TC.card, color: window.TC.ink, fontSize: 14, fontWeight: 700, cursor:'pointer',
+            background: window.TC.card, color: window.TC.ink, fontSize: 16, fontWeight: 700, cursor:'pointer',
           }}>Request revisions</button>
           <button onClick={() => onAct('approve')} style={{
             flex: 1, padding: '14px', borderRadius: 16, border:'none',
-            background: window.TC.green, color:'#fff', fontSize: 14, fontWeight: 700, cursor:'pointer',
+            background: window.TC.green, color:'#fff', fontSize: 16, fontWeight: 700, cursor:'pointer',
           }}>Approve</button>
         </div>
       )}
       {it.status === 'pending' && !role.isBoss && (
-        <div style={{ marginTop: 16, padding: 14, borderRadius: 16, background: window.TC.amberSoft, color:'#7A5A12', fontSize: 13, fontWeight: 600, textAlign:'center' }}>
+        <div style={{ marginTop: 16, padding: 14, borderRadius: 16, background: window.TC.amberSoft, color:'#7A5A12', fontSize: 15, fontWeight: 600, textAlign:'center' }}>
           รอ {boss.name} ตอบกลับ · จะแจ้งเตือนเมื่อมีการเปลี่ยนแปลง
         </div>
       )}
       {it.status === 'approved' && (
-        <div style={{ marginTop: 16, padding: 14, borderRadius: 16, background: window.TC.greenSoft, color: window.TC.greenDk, fontSize: 13, fontWeight: 600, textAlign:'center' }}>
+        <div style={{ marginTop: 16, padding: 14, borderRadius: 16, background: window.TC.greenSoft, color: window.TC.greenDk, fontSize: 15, fontWeight: 600, textAlign:'center' }}>
           ✓ Approved · ทีมสามารถนำข้อมูลไปใช้งานได้ทันที
         </div>
       )}
@@ -2515,78 +2453,60 @@ function ScreenPrePost({ go, role, toast }) {
   const platforms = ['Shopee','TikTok Shop','Lazada','LINE Shop','Facebook'];
   const [active, setActive] = useStateT('Shopee');
 
-  const [checks, setChecks] = useStateT({
-    Shopee: [
-      { ok: true,  text:'Cover 1:1 ขนาด ≥ 500×500',                    detail:'1080×1080 ✓' },
-      { ok: true,  text:'รูปสินค้า 5-9 รูป',                              detail:'7 รูป ✓' },
-      { ok: true,  text:'พื้นหลังขาว/clean สำหรับ rule SH-001',          detail:'OK' },
-      { ok: false, text:'ชื่อสินค้า ≤ 120 chars',                         detail:'128/120 — ตัดออก 8' },
-      { ok: true,  text:'มีคำว่า "พร้อมส่ง" / "Pre-order" ในชื่อ',         detail:'พร้อมส่ง ✓' },
-      { ok: false, text:'หมวดสินค้า + brand ตั้งครบ',                    detail:'brand ว่าง' },
-      { ok: true,  text:'มี SKU / Size chart',                            detail:'แนบครบ' },
-    ],
-    'TikTok Shop': [
-      { ok: true,  text:'Cover 1:1, ≤ 5MB',                             detail:'2.1MB ✓' },
-      { ok: true,  text:'Video product 9:16, 9-60 วินาที',               detail:'00:24 ✓' },
-      { ok: true,  text:'ไม่มี logo คู่แข่งในวิดีโอ',                       detail:'clean' },
-      { ok: false, text:'Caption ไม่เกิน 2,200 chars + 3-5 hashtags',     detail:'7 hashtags — ลด 2' },
-      { ok: true,  text:'มี call-to-action ใน caption',                  detail:'ช้อปเลย ✓' },
-      { ok: false, text:'ไม่ใช้คำต้องห้าม (ดีที่สุด, อันดับ 1)',           detail:'พบ "ดีที่สุด" 1 จุด' },
-    ],
-    Lazada: [
-      { ok: true,  text:'รูปแรก 1:1 ≥ 800×800',                          detail:'1500×1500 ✓' },
-      { ok: true,  text:'ชื่อสินค้า ≤ 255 chars + brand + รุ่น',           detail:'OK' },
-      { ok: true,  text:'รายละเอียดสินค้า ≥ 25 chars',                     detail:'OK' },
-      { ok: false, text:'มีตาราง size chart ภาพ + text',                  detail:'มีแต่ภาพ' },
-      { ok: true,  text:'หมวด LazMall ตั้งครบ',                          detail:'OK' },
-    ],
-    'LINE Shop': [
-      { ok: true,  text:'รูป cover 1:1',                                  detail:'OK' },
-      { ok: true,  text:'ชื่อสินค้า ≤ 60 chars (เหมาะ feed)',              detail:'54/60 ✓' },
-      { ok: false, text:'caption สั้นกระชับ มีอีโมจิ',                      detail:'ยาวเกินไป' },
-      { ok: true,  text:'ลิงก์ LINE OA ฝัง',                              detail:'OK' },
-    ],
-    Facebook: [
-      { ok: true,  text:'Cover 1.91:1 หรือ 1:1',                          detail:'OK' },
-      { ok: true,  text:'มี alt text ทุกรูป',                              detail:'OK' },
-      { ok: false, text:'ไม่ใส่ link โดยตรงในรูป (rule FB-04)',             detail:'พบ URL ในรูป 2' },
-      { ok: true,  text:'caption ≤ 63,206 chars',                         detail:'OK' },
-    ],
+  // ── Load from APP_DATA (hydrated from Sheets) ─────────────────────────
+  const [checks, setChecks] = useStateT(() => {
+    const raw = window.APP_DATA.prepost || [];
+    const grouped = {};
+    platforms.forEach(p => { grouped[p] = []; });
+    raw.forEach(r => {
+      const ok = r.ok === true || r.ok === 'TRUE' || r.ok === 1;
+      if (grouped.hasOwnProperty(r.platform))
+        grouped[r.platform].push({ id: r.id, ok, text: r.text || '', detail: r.detail || '' });
+    });
+    return grouped;
   });
-  const [editing, setEditing] = useStateT(null); // { idx, draft } or { idx: 'new', draft }
+  const [editing, setEditing] = useStateT(null);
 
-  // Caption per platform — editable
-  const [captions, setCaptions] = useStateT({
-    Shopee: 'ทองแท้ไม่กลัวไฟ Trench coat สีทอง รุ่น FW26 ✨ ผ้าซับใน premium งานตัดเย็บประณีต Hand-pick ทุกตัว ดีที่สุด สำหรับช่วงปลายปี · พร้อมส่ง #fedfe #fw26 #lookbook',
-    'TikTok Shop': 'ทองแท้ไม่กลัวไฟ ⚡ Trench coat ที่ใส่แล้วต้องร้องว้าว · เปลี่ยน look ใน 1 ชิ้น ✨ #fedfe #fw26 #lookbook #ootd #tiktokshop #lookbookday',
-    Lazada: 'Fedfe FW26 — Trench coat ทองแท้ไม่กลัวไฟ ผ้าซับในเกรด premium · มีไซส์ S, M, L · พร้อมส่งทั่วประเทศ',
-    'LINE Shop': '✨ Trench coat สีทอง รุ่น FW26 พร้อมส่ง ทักแชทเพื่อสั่งจองเลย',
-    Facebook: 'Fedfe ทองแท้ไม่กลัวไฟ — เปิดตัว Trench coat รุ่น FW26 ✨ งานตัดเย็บประณีต Hand-pick ทุกตัว · พร้อมส่ง',
+  const [captions, setCaptions] = useStateT(() => {
+    const raw = window.APP_DATA.captions || [];
+    const obj = {};
+    platforms.forEach(p => obj[p] = '');
+    raw.forEach(c => { if (obj.hasOwnProperty(c.platform)) obj[c.platform] = c.text || ''; });
+    return obj;
+  });
+  const [captionIds, setCaptionIds] = useStateT(() => {
+    const raw = window.APP_DATA.captions || [];
+    const ids = {};
+    platforms.forEach(p => ids[p] = null);
+    raw.forEach(c => { if (ids.hasOwnProperty(c.platform)) ids[c.platform] = c.id || null; });
+    return ids;
   });
   const [editCap, setEditCap] = useStateT(false);
   const [capDraft, setCapDraft] = useStateT('');
 
-  // Media links — รูป/VDO ที่ approved พร้อมใช้
-  const [media, setMedia] = useStateT([
-    { id:'m1', kind:'photo', title:'Cover 1:1 — Trench front',  res:'1080×1080', size:'2.4 MB', url:'https://drive.google.com/file/d/1aa…/view', folder:false },
-    { id:'m2', kind:'photo', title:'Gallery shot 2-7 (6 รูป)', res:'2000×2500', size:'18 MB',  url:'https://drive.google.com/drive/folders/1bb…', folder:true },
-    { id:'m3', kind:'video', title:'Product video 9:16',        res:'1080×1920', size:'42 MB',  url:'https://drive.google.com/file/d/1cc…/view', folder:false },
-    { id:'m4', kind:'photo', title:'Packshot ครอปจาก look',     res:'2000×2500', size:'1.8 MB', url:'https://drive.google.com/file/d/1dd…/view', folder:false },
-    { id:'m5', kind:'photo', title:'Size chart graphic',         res:'1080×1080', size:'420 KB', url:'https://drive.google.com/file/d/1ee…/view', folder:false },
-  ]);
+  const [media, setMedia] = useStateT(() =>
+    (window.APP_DATA.media || []).map(m => ({
+      ...m, folder: m.folder === true || m.folder === 'TRUE' || m.folder === 1,
+    }))
+  );
   const [editMedia, setEditMedia] = useStateT(null);
 
-  const list = checks[active];
+  const list = checks[active] || [];
   const pass = list.filter(x => x.ok).length;
-  const score = Math.round((pass / list.length) * 100);
+  const score = list.length ? Math.round((pass / list.length) * 100) : 0;
+  const proj = window.APP_DATA.project?.code || '';
 
   const updateCheck = (idx, patch) => {
+    const updated = { ...checks[active][idx], ...patch };
+    window.BACKEND?.save?.('prepost', { id: updated.id, project: proj, platform: active, text: updated.text, detail: updated.detail, ok: updated.ok })?.catch(() => {});
     setChecks(prev => ({
       ...prev,
       [active]: prev[active].map((c, i) => i === idx ? { ...c, ...patch } : c),
     }));
   };
   const deleteCheck = (idx) => {
+    const item = checks[active][idx];
+    if (item?.id) window.BACKEND?.save?.('delete', { tab: 'prepost', id: item.id })?.catch(() => {});
     setChecks(prev => ({
       ...prev,
       [active]: prev[active].filter((_, i) => i !== idx),
@@ -2594,7 +2514,9 @@ function ScreenPrePost({ go, role, toast }) {
   };
   const saveEdit = () => {
     if (editing.idx === 'new') {
-      setChecks(prev => ({ ...prev, [active]: [...prev[active], editing.draft] }));
+      const newItem = { ...editing.draft, id: 'pp-' + Date.now() };
+      window.BACKEND?.save?.('prepost', { id: newItem.id, project: proj, platform: active, text: newItem.text, detail: newItem.detail, ok: newItem.ok })?.catch(() => {});
+      setChecks(prev => ({ ...prev, [active]: [...prev[active], newItem] }));
       toast('เพิ่ม rule แล้ว');
     } else {
       updateCheck(editing.idx, editing.draft);
@@ -2618,16 +2540,16 @@ function ScreenPrePost({ go, role, toast }) {
             <div style={{
               width: 64, height: 64, borderRadius: 14,
               background: `linear-gradient(135deg, ${window.TC.green}, ${window.TC.greenDk})`,
-              display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize: 22,
+              display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize: 25,
               flexShrink: 0,
             }}>🧥</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase' }}>FED-C2 · FE-02-04</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1, marginTop: 1 }}>Trench coat ทองแท้ FW26</div>
-              <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2 }}>฿4,890 · S, M, L</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase' }}>FED-C2 · FE-02-04</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1, marginTop: 1 }}>Trench coat ทองแท้ FW26</div>
+              <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>฿4,890 · S, M, L</div>
             </div>
             <window.Ring pct={score} size={48} stroke={5} color={score >= 80 ? window.TC.green : score >= 60 ? window.TC.amber : window.TC.rose}>
-              <span style={{ fontSize: 11 }}>{score}%</span>
+              <span style={{ fontSize: 13 }}>{score}%</span>
             </window.Ring>
           </div>
         </window.Card>
@@ -2641,7 +2563,7 @@ function ScreenPrePost({ go, role, toast }) {
             return (
               <button key={p} onClick={() => setActive(p)} style={{
                 background: on ? window.TC.ink : window.TC.card, color: on ? '#fff' : window.TC.ink,
-                border:'none', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor:'pointer',
+                border:'none', borderRadius: 999, padding: '8px 14px', fontSize: 14, fontWeight: 600, cursor:'pointer',
                 boxShadow: on ? 'none' : '0 1px 2px rgba(27,26,23,0.05)', whiteSpace:'nowrap',
                 display:'inline-flex', alignItems:'center', gap: 6,
               }}>
@@ -2668,8 +2590,8 @@ function ScreenPrePost({ go, role, toast }) {
                 marginTop: 1, border:'none', cursor: role.isLead ? 'pointer' : 'default',
               }}>{c.ok ? window.I.check : '✕'}</button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: window.TC.ink, lineHeight: 1.35 }}>{c.text}</div>
-                <div style={{ fontSize: 11.5, color: c.ok ? window.TC.muted : window.TC.rose, marginTop: 2, fontWeight: 500 }}>{c.detail}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: window.TC.ink, lineHeight: 1.35 }}>{c.text}</div>
+                <div style={{ fontSize: 13, color: c.ok ? window.TC.muted : window.TC.rose, marginTop: 2, fontWeight: 500 }}>{c.detail}</div>
               </div>
               {role.isLead && (
                 <button onClick={() => setEditing({ idx: i, draft: { ...c } })} style={{
@@ -2687,7 +2609,7 @@ function ScreenPrePost({ go, role, toast }) {
           <button onClick={() => setEditing({ idx:'new', draft: { ok:true, text:'', detail:'' } })}
                   className="tc-tap" style={{
             padding: 14, borderRadius: 16, border:`1.5px dashed ${window.TC.hair}`, background:'transparent',
-            color: window.TC.green, fontSize: 13, fontWeight: 700, cursor:'pointer',
+            color: window.TC.green, fontSize: 15, fontWeight: 700, cursor:'pointer',
             display:'flex', alignItems:'center', justifyContent:'center', gap: 6,
           }}>+ เพิ่ม rule สำหรับ {active}</button>
         )}
@@ -2697,7 +2619,7 @@ function ScreenPrePost({ go, role, toast }) {
           <button onClick={() => toast(score >= 80 ? 'ส่งให้ Admin ลงโพสได้' : 'ขอแก้ไขก่อนโพส')} style={{
             padding: 14, borderRadius: 16, border:'none', cursor:'pointer',
             background: score >= 80 ? window.TC.green : window.TC.amber,
-            color:'#fff', fontSize: 14, fontWeight: 700,
+            color:'#fff', fontSize: 16, fontWeight: 700,
           }}>{score >= 80 ? `✓ ผ่าน — ส่งให้ Admin (${active})` : `แก้ไข ${list.length - pass} จุดก่อนโพส`}</button>
         </div>
 
@@ -2748,13 +2670,13 @@ function ScreenPrePost({ go, role, toast }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 3 }}>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: m.kind === 'video' ? window.TC.orange : '#1B4F87',
+                    <span style={{ fontSize: 11, fontWeight: 700, color: m.kind === 'video' ? window.TC.orange : '#1B4F87',
                                    background: m.kind === 'video' ? window.TC.orangeSoft : window.TC.skySoft,
                                    padding:'1.5px 7px', borderRadius: 4, letterSpacing: 0.3, textTransform:'uppercase' }}>{m.kind}</span>
-                    {m.folder && <span style={{ fontSize: 10, fontWeight: 700, color: window.TC.muted }}>· folder</span>}
+                    {m.folder && <span style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted }}>· folder</span>}
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: window.TC.ink, lineHeight: 1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.title}</div>
-                  <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 2, fontFamily:'ui-monospace, monospace' }}>{m.res} · {m.size}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: window.TC.ink, lineHeight: 1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.title}</div>
+                  <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2, fontFamily:'ui-monospace, monospace' }}>{m.res} · {m.size}</div>
                 </div>
                 <div style={{ display:'flex', gap: 6, flexShrink: 0 }}>
                   <a href={m.url} target="_blank" rel="noopener noreferrer" style={{
@@ -2777,7 +2699,7 @@ function ScreenPrePost({ go, role, toast }) {
             </window.Card>
           ))}
           {media.length === 0 && (
-            <div style={{ padding: 24, textAlign:'center', color: window.TC.muted, fontSize: 12.5, fontStyle:'italic' }}>
+            <div style={{ padding: 24, textAlign:'center', color: window.TC.muted, fontSize: 14, fontStyle:'italic' }}>
               ยังไม่มีลิงก์รูป/วิดีโอ
             </div>
           )}
@@ -2790,7 +2712,14 @@ function ScreenPrePost({ go, role, toast }) {
           <FTextarea value={capDraft} onChange={setCapDraft} rows={6} placeholder="ใส่ caption..." />
         </FRow>
         <FActions onBack={() => setEditCap(false)} backLabel="ยกเลิก"
-                  onSubmit={() => { setCaptions(prev => ({ ...prev, [active]: capDraft })); setEditCap(false); toast('caption updated'); }}
+                  onSubmit={() => {
+                    const capId = captionIds[active] || ('cap-' + proj + '-' + active.replace(/[^a-z0-9]/gi,''));
+                    window.BACKEND?.save?.('captions', { id: capId, project: proj, platform: active, text: capDraft })?.catch(() => {});
+                    setCaptionIds(prev => ({ ...prev, [active]: capId }));
+                    setCaptions(prev => ({ ...prev, [active]: capDraft }));
+                    setEditCap(false);
+                    toast('caption updated');
+                  }}
                   submitLabel="บันทึก" disabled={!capDraft.trim()} />
       </window.Sheet>
 
@@ -2822,18 +2751,28 @@ function ScreenPrePost({ go, role, toast }) {
                           options={[{value:'no',label:'ไฟล์เดียว'},{value:'yes',label:'Folder'}]} />
             </FRow>
             {editMedia.idx !== 'new' && (
-              <button onClick={() => { setMedia(media.filter((_, i) => i !== editMedia.idx)); setEditMedia(null); toast('ลบ media'); }} style={{
+              <button onClick={() => {
+                const item = media[editMedia.idx];
+                if (item?.id) window.BACKEND?.save?.('delete', { tab: 'media', id: item.id })?.catch(() => {});
+                setMedia(media.filter((_, i) => i !== editMedia.idx));
+                setEditMedia(null);
+                toast('ลบ media');
+              }} style={{
                 width:'100%', padding: 12, borderRadius: 14, border:'none', background: window.TC.roseSoft, color:'#8C1F3A',
-                fontSize: 13, fontWeight: 700, cursor:'pointer', marginTop: 6,
+                fontSize: 15, fontWeight: 700, cursor:'pointer', marginTop: 6,
               }}>ลบลิงก์นี้</button>
             )}
             <FActions onBack={() => setEditMedia(null)} backLabel="ยกเลิก"
                       onSubmit={() => {
                         if (editMedia.idx === 'new') {
-                          setMedia([...media, { ...editMedia.draft, id:'m'+Date.now() }]);
+                          const newItem = { ...editMedia.draft, id: 'm' + Date.now() };
+                          window.BACKEND?.save?.('media', { ...newItem, project: proj })?.catch(() => {});
+                          setMedia([...media, newItem]);
                           toast('เพิ่ม media');
                         } else {
-                          setMedia(media.map((m, i) => i === editMedia.idx ? editMedia.draft : m));
+                          const item = editMedia.draft;
+                          window.BACKEND?.save?.('media', { ...item, project: proj })?.catch(() => {});
+                          setMedia(media.map((m, i) => i === editMedia.idx ? item : m));
                           toast('แก้ media');
                         }
                         setEditMedia(null);
@@ -2861,7 +2800,7 @@ function ScreenPrePost({ go, role, toast }) {
             {editing.idx !== 'new' && (
               <button onClick={() => { deleteCheck(editing.idx); setEditing(null); toast('ลบ rule'); }} style={{
                 width:'100%', padding: 12, borderRadius: 14, border:'none', background: window.TC.roseSoft, color:'#8C1F3A',
-                fontSize: 13, fontWeight: 700, cursor:'pointer', marginTop: 6,
+                fontSize: 15, fontWeight: 700, cursor:'pointer', marginTop: 6,
               }}>ลบ rule นี้</button>
             )}
             <FActions onBack={() => setEditing(null)} backLabel="ยกเลิก" onSubmit={saveEdit}
@@ -2881,7 +2820,7 @@ function CaptionWithFlags({ text, active }) {
   const pattern = new RegExp(`(${BANNED_WORDS.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
   const parts = text.split(pattern);
   return (
-    <div style={{ fontSize: 12.5, color: window.TC.ink2, lineHeight: 1.6, marginBottom: 12 }}>
+    <div style={{ fontSize: 14, color: window.TC.ink2, lineHeight: 1.6, marginBottom: 12 }}>
       "{parts.map((p, i) => {
         const banned = BANNED_WORDS.some(w => p.toLowerCase() === w.toLowerCase());
         if (banned) return <span key={i} style={{ background: window.TC.roseSoft, color:'#8C1F3A', padding:'1px 4px', borderRadius: 4, fontWeight: 700 }}>{p}</span>;
@@ -2899,17 +2838,17 @@ function CaptionFlags({ text, active }) {
   return (
     <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
       {bannedHits.length > 0 ? (
-        <span style={{ fontSize: 11, fontWeight: 700, color: window.TC.rose, background: window.TC.roseSoft, padding:'4px 10px', borderRadius: 999 }}>⚠︎ คำต้องห้าม {bannedHits.length}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: window.TC.rose, background: window.TC.roseSoft, padding:'4px 10px', borderRadius: 999 }}>⚠︎ คำต้องห้าม {bannedHits.length}</span>
       ) : (
-        <span style={{ fontSize: 11, fontWeight: 700, color: window.TC.green, background: window.TC.greenSoft, padding:'4px 10px', borderRadius: 999 }}>✓ ภาษาสะอาด</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: window.TC.green, background: window.TC.greenSoft, padding:'4px 10px', borderRadius: 999 }}>✓ ภาษาสะอาด</span>
       )}
-      <span style={{ fontSize: 11, fontWeight: 700, color: window.TC.green, background: window.TC.greenSoft, padding:'4px 10px', borderRadius: 999 }}>✓ Tone of voice</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: window.TC.green, background: window.TC.greenSoft, padding:'4px 10px', borderRadius: 999 }}>✓ Tone of voice</span>
       {hashtags > limit ? (
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#7A5A12', background: window.TC.amberSoft, padding:'4px 10px', borderRadius: 999 }}>· hashtag {hashtags}/{limit}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#7A5A12', background: window.TC.amberSoft, padding:'4px 10px', borderRadius: 999 }}>· hashtag {hashtags}/{limit}</span>
       ) : (
-        <span style={{ fontSize: 11, fontWeight: 700, color: window.TC.green, background: window.TC.greenSoft, padding:'4px 10px', borderRadius: 999 }}>✓ hashtag {hashtags}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: window.TC.green, background: window.TC.greenSoft, padding:'4px 10px', borderRadius: 999 }}>✓ hashtag {hashtags}</span>
       )}
-      <span style={{ fontSize: 11, fontWeight: 700, color: window.TC.muted, background: window.TC.bg2, padding:'4px 10px', borderRadius: 999 }}>{len} ตัวอักษร</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: window.TC.muted, background: window.TC.bg2, padding:'4px 10px', borderRadius: 999 }}>{len} ตัวอักษร</span>
     </div>
   );
 }
@@ -2977,16 +2916,16 @@ function ScreenIntegrations({ go, role, toast }) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.2 }}>Google Sheets</span>
+                  <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.2 }}>Google Sheets</span>
                   <span style={{
                     display:'inline-flex', alignItems:'center', gap: 4, padding:'2px 8px', borderRadius: 999,
-                    background:'rgba(255,255,255,0.2)', fontSize: 10, fontWeight: 700,
+                    background:'rgba(255,255,255,0.2)', fontSize: 12, fontWeight: 700,
                   }}>
                     <span style={{ width: 6, height: 6, borderRadius: 999, background:'#7FF59E', boxShadow:'0 0 8px #7FF59E' }} />
                     LIVE
                   </span>
                 </div>
-                <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 2, fontFamily:'ui-monospace, monospace' }}>
+                <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2, fontFamily:'ui-monospace, monospace' }}>
                   TC-Ops-Master · {totalRows} rows
                 </div>
               </div>
@@ -2997,7 +2936,7 @@ function ScreenIntegrations({ go, role, toast }) {
               <MiniStat lab="Writes/day" val="38" />
             </div>
           </div>
-          <div style={{ padding: '10px 14px', background: window.TC.bg2, fontSize: 11, color: window.TC.muted, fontFamily:'ui-monospace, monospace', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ padding: '10px 14px', background: window.TC.bg2, fontSize: 13, color: window.TC.muted, fontFamily:'ui-monospace, monospace', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>docs.google.com/spreadsheets/d/1aB2c…XyZ</span>
             <button onClick={() => { navigator.clipboard?.writeText('https://docs.google.com/spreadsheets/d/1aB2c…XyZ/edit'); toast('Copied URL'); }} style={{
               background:'none', border:'none', color: window.TC.green, cursor:'pointer', display:'inline-flex',
@@ -3015,11 +2954,11 @@ function ScreenIntegrations({ go, role, toast }) {
             }}>
               <div style={{
                 width: 28, height: 28, borderRadius: 8, background: window.TC.greenSoft, color: window.TC.greenDk,
-                display:'flex', alignItems:'center', justifyContent:'center', fontSize: 14, fontWeight: 800,
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize: 16, fontWeight: 800,
               }}>{s.dir}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: window.TC.ink, fontFamily:'ui-monospace, monospace' }}>{s.tab}</div>
-                <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 1 }}>{s.rows} rows · sync {s.sync}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, fontFamily:'ui-monospace, monospace' }}>{s.tab}</div>
+                <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 1 }}>{s.rows} rows · sync {s.sync}</div>
               </div>
               <span style={{ width: 8, height: 8, borderRadius: 999, background: window.TC.green, boxShadow:`0 0 6px ${window.TC.green}` }} />
             </div>
@@ -3033,13 +2972,13 @@ function ScreenIntegrations({ go, role, toast }) {
             <window.Card key={e.path} pad={12} radius={16}>
               <div style={{ display:'flex', alignItems:'flex-start', gap: 10 }}>
                 <span style={{
-                  fontSize: 10, fontWeight: 800, color: e.m === 'GET' ? window.TC.sky : window.TC.orange,
+                  fontSize: 12, fontWeight: 800, color: e.m === 'GET' ? window.TC.sky : window.TC.orange,
                   background: e.m === 'GET' ? window.TC.skySoft : window.TC.orangeSoft,
                   padding:'4px 8px', borderRadius: 6, letterSpacing: 0.4, flexShrink: 0,
                 }}>{e.m}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: window.TC.ink, fontFamily:'ui-monospace, monospace' }}>{e.path}</div>
-                  <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 3, lineHeight: 1.4 }}>{e.desc}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink, fontFamily:'ui-monospace, monospace' }}>{e.path}</div>
+                  <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 3, lineHeight: 1.4 }}>{e.desc}</div>
                 </div>
               </div>
             </window.Card>
@@ -3055,16 +2994,16 @@ function ScreenIntegrations({ go, role, toast }) {
         {showCode && (
           <window.Card pad={0} radius={20} style={{ background:'#1B1A17', overflow:'hidden', marginBottom: 22 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderBottom:'0.5px solid rgba(255,255,255,0.08)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color:'rgba(255,255,255,0.6)', fontFamily:'ui-monospace, monospace' }}>Code.gs</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color:'rgba(255,255,255,0.6)', fontFamily:'ui-monospace, monospace' }}>Code.gs</span>
               <button onClick={() => { navigator.clipboard?.writeText(APPS_SCRIPT_TEMPLATE); toast('Copied'); }} style={{
                 background:'rgba(255,255,255,0.1)', border:'none', borderRadius: 6, padding:'4px 10px',
-                color:'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 700, cursor:'pointer',
+                color:'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 700, cursor:'pointer',
                 display:'inline-flex', alignItems:'center', gap: 4,
               }}>{window.I.copy} Copy</button>
             </div>
             <pre style={{
               margin: 0, padding: '14px 14px', overflowX: 'auto',
-              fontFamily:'ui-monospace, "SF Mono", monospace', fontSize: 10.5, lineHeight: 1.55,
+              fontFamily:'ui-monospace, "SF Mono", monospace', fontSize: 12, lineHeight: 1.55,
               color: '#E8DDC8', whiteSpace: 'pre',
             }}>{APPS_SCRIPT_TEMPLATE}</pre>
           </window.Card>
@@ -3077,12 +3016,12 @@ function ScreenIntegrations({ go, role, toast }) {
             <div style={{ width: 44, height: 44, borderRadius: 14, background:'#E8F8EE', display:'flex', alignItems:'center', justifyContent:'center' }}>{window.I.line}</div>
             <div style={{ flex: 1 }}>
               <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>@teamcc-ops</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>@teamcc-ops</span>
                 <window.Tag kind="done" sm>Connected</window.Tag>
               </div>
-              <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 2 }}>7 users registered · LIFF id 2007123…</div>
+              <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>7 users registered · LIFF id 2007123…</div>
             </div>
-            <button onClick={() => setShowLine(true)} style={{ background: window.TC.ink, color:'#fff', border:'none', borderRadius: 999, padding:'8px 12px', fontSize: 11.5, fontWeight: 700, cursor:'pointer' }}>Test</button>
+            <button onClick={() => setShowLine(true)} style={{ background: window.TC.ink, color:'#fff', border:'none', borderRadius: 999, padding:'8px 12px', fontSize: 13, fontWeight: 700, cursor:'pointer' }}>Test</button>
           </div>
         </window.Card>
 
@@ -3096,8 +3035,8 @@ function ScreenIntegrations({ go, role, toast }) {
             <window.Card key={n.l} pad={12} radius={16}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
                 <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: window.TC.ink }}>{n.l}</div>
-                  <div style={{ fontSize: 10.5, color: window.TC.muted, marginTop: 2 }}>{n.sub}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: window.TC.ink }}>{n.l}</div>
+                  <div style={{ fontSize: 12, color: window.TC.muted, marginTop: 2 }}>{n.sub}</div>
                 </div>
                 <div style={{ width: 30, height: 18, borderRadius: 999, background: n.on ? window.TC.green : '#D6D2C7', padding: 2, display:'flex', alignItems:'center' }}>
                   <div style={{ width: 14, height: 14, borderRadius: 999, background:'#fff', marginLeft: n.on ? 'auto' : 0, boxShadow:'0 1px 2px rgba(0,0,0,0.15)' }} />
@@ -3121,7 +3060,7 @@ function ScreenIntegrations({ go, role, toast }) {
             <div key={i} style={{
               display:'flex', alignItems:'center', gap: 10, padding: '10px 14px',
               borderTop: i === 0 ? 'none' : `0.5px solid ${window.TC.hair}`,
-              fontSize: 11.5, fontFamily:'ui-monospace, monospace',
+              fontSize: 13, fontFamily:'ui-monospace, monospace',
             }}>
               <span style={{ width: 6, height: 6, borderRadius: 999, background: l.ok ? window.TC.green : window.TC.rose, flexShrink: 0 }} />
               <span style={{ color: window.TC.muted, width: 56, flexShrink: 0 }}>{l.t}</span>
@@ -3137,9 +3076,9 @@ function ScreenIntegrations({ go, role, toast }) {
           <div style={{ padding: 14, borderRadius: 18, background:'#06C75512' }}>
             <div style={{ display:'flex', alignItems:'center', gap: 10, marginBottom: 10 }}>
               {window.I.line}
-              <span style={{ fontSize: 13, fontWeight: 700, color: window.TC.ink }}>@teamcc-ops</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: window.TC.ink }}>@teamcc-ops</span>
             </div>
-            <div style={{ background:'#fff', borderRadius: 14, padding: 12, fontSize: 12.5, color: window.TC.ink, lineHeight: 1.5 }}>
+            <div style={{ background:'#fff', borderRadius: 14, padding: 12, fontSize: 14, color: window.TC.ink, lineHeight: 1.5 }}>
               <strong>⚠️ มี task ที่ต้อง update</strong><br/>
               โปรเจค: FED-C2 · Sample<br/>
               “Confirm ผ้าซับใน lot ใหม่”<br/>
@@ -3148,7 +3087,7 @@ function ScreenIntegrations({ go, role, toast }) {
             </div>
           </div>
           <button onClick={() => { setShowLine(false); toast('Sent test → @chardchakaj'); }} style={{
-            padding: 14, borderRadius: 16, border:'none', background: window.TC.green, color:'#fff', fontSize: 14, fontWeight: 700, cursor:'pointer',
+            padding: 14, borderRadius: 16, border:'none', background: window.TC.green, color:'#fff', fontSize: 16, fontWeight: 700, cursor:'pointer',
           }}>ส่ง test message</button>
         </div>
       </window.Sheet>
@@ -3163,9 +3102,9 @@ window.ScreenIntegrations = ScreenIntegrations;
 function FRow({ label, children, hint }) {
   return (
     <label style={{ display:'block', marginBottom: 12 }}>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', marginBottom: 6 }}>{label}</div>
       {children}
-      {hint && <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 4 }}>{hint}</div>}
+      {hint && <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 4 }}>{hint}</div>}
     </label>
   );
 }
@@ -3174,7 +3113,7 @@ function FInput({ value, onChange, placeholder = '', mono = false, type = 'text'
     <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} type={type} style={{
       width:'100%', boxSizing:'border-box',
       padding:'12px 14px', border:'none', borderRadius: 14,
-      background: window.TC.card, fontSize: 14, color: window.TC.ink,
+      background: window.TC.card, fontSize: 16, color: window.TC.ink,
       fontFamily: mono ? 'ui-monospace, monospace' : 'inherit',
       boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)', outline:'none',
     }} />
@@ -3185,7 +3124,7 @@ function FTextarea({ value, onChange, placeholder = '', rows = 3 }) {
     <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{
       width:'100%', boxSizing:'border-box', resize:'vertical',
       padding:'12px 14px', border:'none', borderRadius: 14,
-      background: window.TC.card, fontSize: 14, color: window.TC.ink,
+      background: window.TC.card, fontSize: 16, color: window.TC.ink,
       boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)', outline:'none', fontFamily:'inherit', lineHeight: 1.4,
     }} />
   );
@@ -3196,7 +3135,7 @@ function FSelect({ value, onChange, options }) {
       <select value={value} onChange={e => onChange(e.target.value)} style={{
         width:'100%', appearance:'none', WebkitAppearance:'none',
         padding:'12px 38px 12px 14px', border:'none', borderRadius: 14,
-        background: window.TC.card, fontSize: 14, color: window.TC.ink,
+        background: window.TC.card, fontSize: 16, color: window.TC.ink,
         boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)', outline:'none', cursor:'pointer', fontFamily:'inherit',
       }}>
         {options.map(o => {
@@ -3216,11 +3155,11 @@ function FActions({ submitLabel = 'บันทึก', onSubmit, onBack, backLa
     <div style={{ display:'flex', gap: 10, marginTop: 18, position:'sticky', bottom: 0, paddingTop: 8, paddingBottom: 8, background: window.TC.bg2 }}>
       <button onClick={onBack} style={{
         flex: 1, padding:'14px', borderRadius: 16, border:`1.5px solid ${window.TC.hair}`,
-        background: window.TC.card, color: window.TC.ink, fontSize: 14, fontWeight: 700, cursor:'pointer',
+        background: window.TC.card, color: window.TC.ink, fontSize: 16, fontWeight: 700, cursor:'pointer',
       }}>{backLabel}</button>
       <button onClick={onSubmit} disabled={disabled} style={{
         flex: 2, padding:'14px', borderRadius: 16, border:'none',
-        background: disabled ? '#C9C5BA' : window.TC.green, color:'#fff', fontSize: 14, fontWeight: 700,
+        background: disabled ? '#C9C5BA' : window.TC.green, color:'#fff', fontSize: 16, fontWeight: 700,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}>{submitLabel}</button>
     </div>
@@ -3237,7 +3176,7 @@ function FSegmented({ value, onChange, options }) {
           <button key={v} onClick={() => onChange(v)} style={{
             flex: 1, background: on ? window.TC.card : 'transparent', color: on ? window.TC.ink : window.TC.ink2,
             border:'none', padding:'9px 8px', borderRadius: 12,
-            fontSize: 12.5, fontWeight: 600, cursor:'pointer',
+            fontSize: 14, fontWeight: 600, cursor:'pointer',
             boxShadow: on ? '0 1px 2px rgba(27,26,23,0.08)' : 'none',
           }}>{l}</button>
         );
@@ -3253,8 +3192,8 @@ window.FSelect = FSelect; window.FActions = FActions; window.FSegmented = FSegme
 // ─────────────────────────────────────────────────────────
 function NewTaskForm({ role, toast, onDone, onBack }) {
   const projs = window.APP_DATA.projects.filter(p => !p.archived);
-  const allOwners = [...window.APP_DATA.team, ...window.APP_DATA.project.freelancers];
-  const [project, setProject] = React.useState(projs[0].code);
+  const allOwners = [...window.APP_DATA.team, ...(window.APP_DATA.project.freelancers || [])];
+  const [project, setProject] = React.useState((projs[0] || {}).code || '');
   const [title, setTitle] = React.useState('');
   const [owner, setOwner] = React.useState(role.id);
   const [due, setDue] = React.useState('');
@@ -3286,12 +3225,14 @@ function NewTaskForm({ role, toast, onDone, onBack }) {
 // ─────────────────────────────────────────────────────────
 function NewApprovalForm({ role, toast, onDone, onBack }) {
   const projs = window.APP_DATA.projects.filter(p => !p.archived);
-  const [project, setProject] = React.useState(projs[0].code);
+  const [project, setProject] = React.useState((projs[0] || {}).code || '');
   const [what, setWhat] = React.useState('');
   const [note, setNote] = React.useState('');
   const [links, setLinks] = React.useState(['']);
   const [urgent, setUrgent] = React.useState(false);
-  const boss = window.APP_DATA.team.find(u => u.isBoss);
+  const boss = window.APP_DATA.team.find(u => u.isBoss)
+    || window.APP_DATA.team[0]
+    || { name: 'Founder', id: 'u0', lineUserId: '' };
   return (
     <div>
       <FRow label="Project"><FSelect value={project} onChange={setProject} options={projs.map(p => ({ value:p.code, label:`${p.code} · ${p.name}` }))} /></FRow>
@@ -3304,7 +3245,7 @@ function NewApprovalForm({ role, toast, onDone, onBack }) {
           ))}
           <button onClick={() => setLinks([...links, ''])} style={{
             padding:'8px 12px', border:`1.5px dashed ${window.TC.hair}`, background:'transparent',
-            borderRadius: 10, color: window.TC.green, fontSize: 12, fontWeight: 700, cursor:'pointer',
+            borderRadius: 10, color: window.TC.green, fontSize: 14, fontWeight: 700, cursor:'pointer',
             display:'flex', alignItems:'center', justifyContent:'center', gap: 6,
           }}>+ เพิ่มลิงก์</button>
         </div>
@@ -3314,8 +3255,8 @@ function NewApprovalForm({ role, toast, onDone, onBack }) {
                       display:'flex', alignItems:'center', gap: 10 }}>
           <window.Avatar user={boss} size={32} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: window.TC.ink }}>{boss.name}</div>
-            <div style={{ fontSize: 11, color: window.TC.muted }}>{boss.role}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>{boss.name}</div>
+            <div style={{ fontSize: 13, color: window.TC.muted }}>{boss.role}</div>
           </div>
           <window.Tag kind="next" sm>Boss</window.Tag>
         </div>
@@ -3354,7 +3295,7 @@ function ReserveEquipForm({ role, toast, onDone, onBack, presetItem }) {
       </div>
       <FRow label="ใช้สำหรับ"><FTextarea value={purpose} onChange={setPurpose} rows={2} placeholder="Lookbook day 1 – บ้านโบราณ บางรัก" /></FRow>
       {it && (
-        <div style={{ padding: 12, borderRadius: 14, background: window.TC.greenSoft, fontSize: 12, color: window.TC.greenDk, fontWeight: 600, marginBottom: 8 }}>
+        <div style={{ padding: 12, borderRadius: 14, background: window.TC.greenSoft, fontSize: 14, color: window.TC.greenDk, fontWeight: 600, marginBottom: 8 }}>
           ✓ {it.name} พร้อมใช้งาน · SN {it.sn}
         </div>
       )}
@@ -3436,8 +3377,8 @@ function NewProjectForm({ role, toast, onDone, onBack }) {
               }}>
                 <window.Avatar user={u} size={28} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: window.TC.ink }}>{u.name}</div>
-                  <div style={{ fontSize: 10.5, color: window.TC.muted }}>{u.role}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: window.TC.ink }}>{u.name}</div>
+                  <div style={{ fontSize: 12, color: window.TC.muted }}>{u.role}</div>
                 </div>
                 <div style={{
                   width: 18, height: 18, borderRadius: 999, background: on ? window.TC.green : 'transparent',
@@ -3459,7 +3400,7 @@ function NewProjectForm({ role, toast, onDone, onBack }) {
           ))}
           <button onClick={() => setFreelancers([...freelancers, { name:'', role:'', rate:'' }])} style={{
             padding:'8px 12px', border:`1.5px dashed ${window.TC.hair}`, background:'transparent',
-            borderRadius: 10, color: window.TC.green, fontSize: 12, fontWeight: 700, cursor:'pointer',
+            borderRadius: 10, color: window.TC.green, fontSize: 14, fontWeight: 700, cursor:'pointer',
           }}>+ เพิ่ม freelance</button>
         </div>
       </FRow>
@@ -3509,8 +3450,8 @@ function QuickAddSheet({ open, onClose, role, toast, go, initial = 'menu' }) {
                 <div style={{ width: 44, height: 44, borderRadius: 14, background: x.c + '22', color: x.c,
                               display:'flex', alignItems:'center', justifyContent:'center' }}>{x.i}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: 700, color: window.TC.ink }}>{x.l}</div>
-                  <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 1 }}>{x.sub}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink }}>{x.l}</div>
+                  <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 1 }}>{x.sub}</div>
                 </div>
                 <span style={{ color: window.TC.muted, display:'inline-flex' }}>{window.I.chev}</span>
               </button>
@@ -3518,15 +3459,15 @@ function QuickAddSheet({ open, onClose, role, toast, go, initial = 'menu' }) {
           </div>
         ) : (
           <div style={{ padding: '30px 20px', textAlign:'center', color: window.TC.muted }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>👁︎</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: window.TC.ink, marginBottom: 6 }}>View-only mode</div>
-            <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 41, marginBottom: 10 }}>👁︎</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink, marginBottom: 6 }}>View-only mode</div>
+            <div style={{ fontSize: 14, lineHeight: 1.5 }}>
               บทบาทนี้ดูข้อมูลและนำงานที่ approved แล้วไปใช้งานต่อ.<br/>
               หากต้องการเพิ่ม task หรือส่ง approve, ติดต่อ Operation Lead.
             </div>
             <button onClick={() => { onClose(); toast('เปิด chat ให้ Lead'); }} style={{
               marginTop: 16, padding:'12px 22px', borderRadius: 999, border:'none',
-              background: window.TC.green, color:'#fff', fontWeight: 700, fontSize: 13, cursor:'pointer',
+              background: window.TC.green, color:'#fff', fontWeight: 700, fontSize: 15, cursor:'pointer',
             }}>ปรึกษา Lead</button>
           </div>
         )
@@ -3558,7 +3499,7 @@ function HireFreelanceForm({ role, toast, onDone, onBack }) {
 
   return (
     <div>
-      <div style={{ padding:'10px 12px', borderRadius: 14, background: window.TC.greenSoft, fontSize: 11.5, color: window.TC.greenDk, fontWeight: 600, marginBottom: 14 }}>
+      <div style={{ padding:'10px 12px', borderRadius: 14, background: window.TC.greenSoft, fontSize: 13, color: window.TC.greenDk, fontWeight: 600, marginBottom: 14 }}>
         เพิ่มเข้า project · {p.code} · {p.name}
       </div>
       <FRow label="ชื่อ"><FInput value={name} onChange={(v) => { setName(v); if (!short) setShort(v.slice(0,2).toUpperCase()); }} placeholder="เช่น เบลล์ Vintage" /></FRow>
@@ -3627,12 +3568,12 @@ function ScreenTeam({ go, role, toast, openAdd }) {
               <window.Avatar user={u} size={46} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display:'flex', alignItems:'center', gap: 6, flexWrap:'wrap' }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: window.TC.ink }}>{u.name}</span>
+                  <span style={{ fontSize: 17, fontWeight: 700, color: window.TC.ink }}>{u.name}</span>
                   {u.isBoss && <window.Tag kind="next" sm>Founder</window.Tag>}
                   {u.isLead && <window.Tag kind="done" sm>Lead</window.Tag>}
                 </div>
-                <div style={{ fontSize: 12, color: window.TC.muted, marginTop: 2 }}>{u.role}</div>
-                <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 4, display:'flex', alignItems:'center', gap: 6 }}>
+                <div style={{ fontSize: 14, color: window.TC.muted, marginTop: 2 }}>{u.role}</div>
+                <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 4, display:'flex', alignItems:'center', gap: 6 }}>
                   <span style={{ width: 7, height: 7, borderRadius: 999, background: u.online ? window.TC.green : '#C9C5BA' }} />
                   {u.online ? 'online' : 'offline'} · joined 2024
                 </div>
@@ -3698,7 +3639,7 @@ function TeamMemberForm({ member, role, toast, onDone, onBack, editing = false }
       {editing && (
         <button onClick={() => onDone(`ลบ ${name} ออกจากทีม`)} style={{
           width:'100%', padding: 12, borderRadius: 14, border:'none', background: window.TC.roseSoft, color:'#8C1F3A',
-          fontSize: 13, fontWeight: 700, cursor:'pointer', marginTop: 6,
+          fontSize: 15, fontWeight: 700, cursor:'pointer', marginTop: 6,
         }}>ลบสมาชิกออกจาก core team</button>
       )}
 
@@ -3735,7 +3676,7 @@ function NotificationsSheet({ open, onClose, role, go, toast }) {
   return (
     <window.Sheet open={open} onClose={onClose} title="Notifications" height="82%">
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 12, color: window.TC.muted, fontWeight: 600 }}>{items.filter(x=>x.unread).length} ยังไม่อ่าน</span>
+        <span style={{ fontSize: 14, color: window.TC.muted, fontWeight: 600 }}>{items.filter(x=>x.unread).length} ยังไม่อ่าน</span>
         <window.TextBtn onClick={() => toast('mark all read')}>อ่านแล้วทั้งหมด</window.TextBtn>
       </div>
       <div style={{ display:'grid', gap: 8 }}>
@@ -3753,8 +3694,8 @@ function NotificationsSheet({ open, onClose, role, go, toast }) {
                 display:'flex', alignItems:'center', justifyContent:'center', flexShrink: 0,
               }}>{n.icon}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, color: window.TC.ink, lineHeight: 1.4, fontWeight: n.unread ? 600 : 500 }}>{n.msg}</div>
-                <div style={{ fontSize: 11, color: window.TC.muted, marginTop: 3, display:'flex', alignItems:'center', gap: 6 }}>
+                <div style={{ fontSize: 14, color: window.TC.ink, lineHeight: 1.4, fontWeight: n.unread ? 600 : 500 }}>{n.msg}</div>
+                <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 3, display:'flex', alignItems:'center', gap: 6 }}>
                   <window.Avatar user={u} size={14} /> {u?.name} · {n.t}
                 </div>
               </div>
@@ -3796,13 +3737,13 @@ function SearchSheet({ open, onClose, go }) {
         <div style={{ position:'relative' }}>
           <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder="ค้น project, task, คน, อุปกรณ์..." style={{
             width:'100%', boxSizing:'border-box', padding:'14px 16px 14px 44px', borderRadius: 16,
-            border:'none', background: window.TC.card, fontSize: 14, color: window.TC.ink,
+            border:'none', background: window.TC.card, fontSize: 16, color: window.TC.ink,
             boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)', outline:'none', fontFamily:'inherit',
           }} />
           <span style={{ position:'absolute', left: 14, top:'50%', transform:'translateY(-50%)', color: window.TC.muted, pointerEvents:'none' }}>{window.I.search}</span>
         </div>
       </div>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', margin:'10px 4px 8px' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase', margin:'10px 4px 8px' }}>
         {q.trim() ? `${matched.length} matches` : 'แนะนำ'}
       </div>
       <div style={{ display:'grid', gap: 8 }}>
@@ -3818,14 +3759,14 @@ function SearchSheet({ open, onClose, go }) {
             }}>{it.icon}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 2 }}>
-                <span style={{ fontSize: 9.5, fontWeight: 700, color: window.TC.muted, textTransform:'uppercase', letterSpacing: 0.4 }}>{it.kind}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: window.TC.muted, textTransform:'uppercase', letterSpacing: 0.4 }}>{it.kind}</span>
               </div>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: window.TC.ink, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{it.label}</div>
-              <div style={{ fontSize: 11.5, color: window.TC.muted, marginTop: 1 }}>{it.sub}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{it.label}</div>
+              <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 1 }}>{it.sub}</div>
             </div>
           </button>
         ))}
-        {matched.length === 0 && <div style={{ padding: 30, textAlign:'center', color: window.TC.muted, fontSize: 12 }}>ไม่พบผลลัพธ์</div>}
+        {matched.length === 0 && <div style={{ padding: 30, textAlign:'center', color: window.TC.muted, fontSize: 14 }}>ไม่พบผลลัพธ์</div>}
       </div>
     </window.Sheet>
   );
@@ -3849,9 +3790,9 @@ function TaskDetailSheet({ open, onClose, task, role, toast }) {
         <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 8, flexWrap:'wrap' }}>
           <window.Tag kind={t.status} sm>{t.tag}</window.Tag>
           {t.priority === 'high' && <span style={{ color: window.TC.rose, display:'inline-flex' }}>{window.I.flame}</span>}
-          <span style={{ fontSize: 11, color: window.TC.muted, fontWeight: 600 }}>· FED-C2</span>
+          <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· FED-C2</span>
         </div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2, lineHeight: 1.3 }}>{t.t}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2, lineHeight: 1.3 }}>{t.t}</div>
       </window.Card>
 
       {canEdit ? (
@@ -3895,15 +3836,15 @@ function TaskDetailSheet({ open, onClose, task, role, toast }) {
                           display:'flex', alignItems:'center', gap: 10 }}>
               <window.Avatar user={window.userById(t.owner)} size={32} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: window.TC.ink }}>{window.userById(t.owner)?.name}</div>
-                <div style={{ fontSize: 11, color: window.TC.muted }}>{window.userById(t.owner)?.role}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink }}>{window.userById(t.owner)?.name}</div>
+                <div style={{ fontSize: 13, color: window.TC.muted }}>{window.userById(t.owner)?.role}</div>
               </div>
             </div>
           </FRow>
           <FRow label="กำหนดส่ง">
-            <div style={{ padding:'12px 14px', borderRadius: 14, background: window.TC.card, fontSize: 14, color: window.TC.ink, boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)' }}>{t.due}</div>
+            <div style={{ padding:'12px 14px', borderRadius: 14, background: window.TC.card, fontSize: 16, color: window.TC.ink, boxShadow:'inset 0 0 0 1px rgba(27,26,23,0.06)' }}>{t.due}</div>
           </FRow>
-          <div style={{ marginTop: 18, padding: 14, borderRadius: 16, background: window.TC.amberSoft, color:'#7A5A12', fontSize: 12.5, fontWeight: 600, textAlign:'center' }}>
+          <div style={{ marginTop: 18, padding: 14, borderRadius: 16, background: window.TC.amberSoft, color:'#7A5A12', fontSize: 14, fontWeight: 600, textAlign:'center' }}>
             งานนี้ไม่ใช่ของคุณ · ปรึกษา Lead หากต้องการเปลี่ยน
           </div>
         </>
@@ -3916,8 +3857,8 @@ window.TaskDetailSheet = TaskDetailSheet;
 function MiniStat({ lab, val }) {
   return (
     <div>
-      <div style={{ fontSize: 9.5, fontWeight: 600, opacity: 0.7, letterSpacing: 0.5, textTransform:'uppercase' }}>{lab}</div>
-      <div style={{ fontSize: 14, fontWeight: 800, marginTop: 2 }}>{val}</div>
+      <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.7, letterSpacing: 0.5, textTransform:'uppercase' }}>{lab}</div>
+      <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{val}</div>
     </div>
   );
 }
@@ -4088,7 +4029,10 @@ function App() {
       const match = window.APP_DATA.team.find(u => u.lineUserId === liffUserId);
       if (match) return match;
     }
-    return window.APP_DATA.team.find(u => u.id === t.role) || window.APP_DATA.team[1];
+    return window.APP_DATA.team.find(u => u.id === t.role)
+      || window.APP_DATA.team[1]
+      || window.APP_DATA.team[0]
+      || { id:'u0', name:'User', role:'Operation Lead', isLead:true, short:'U', tint:'#1F8A5B' };
   }, [t.role]);
 
   const toast = (m) => { setToastMsg(m); setTimeout(() => setToastMsg(''), 2200); };

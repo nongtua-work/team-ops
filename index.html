@@ -2,7 +2,11 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1F8A5B">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>TEAM Chardchakaj — Internal Ops</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,10 +52,10 @@ window.APP_DATA = {
     tagline: 'Internal Ops',
   },
   user: {
-    // Op Lead view by default
-    name: 'มะปราง',
-    role: 'Operation Lead',
-    initial: 'มป',
+    // Overwritten by LIFF profile (displayName, pictureUrl) once logged in.
+    name: '',
+    role: '',
+    initial: '',
     tint: '#1F8A5B',
   },
   // team / projects / project are populated from Sheets via BACKEND.bootstrap()
@@ -551,25 +555,9 @@ window.Segmented = Segmented;
 // ──────────────────────────────────────────────────────────────
 // Status bar (iOS, transparent overlay)
 // ──────────────────────────────────────────────────────────────
-function StatusBar({ time = '9:41', dark = false }) {
-  const c = dark ? '#fff' : '#000';
-  return (
-    <div style={{
-      position:'absolute', top: 0, left: 0, right: 0, zIndex: 50,
-      display:'flex', justifyContent:'space-between', alignItems:'center',
-      padding: '18px 28px 0', pointerEvents:'none',
-    }}>
-      <div style={{ fontSize: 18, fontWeight: 600, color: c, letterSpacing: 0.2 }}>{time}</div>
-      <div style={{ display:'flex', gap: 6, alignItems:'center' }}>
-        <svg width="16" height="11" viewBox="0 0 16 11"><path d="M0 6h2v5H0zM4 4h2v7H4zM8 2h2v9H8zM12 0h2v11h-2z" fill={c}/></svg>
-        <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3a6 6 0 014.2 1.7l1-1A7.5 7.5 0 007 1.5 7.5 7.5 0 001.8 3.7l1 1A6 6 0 017 3zM7 6c1 0 2 .4 2.7 1l1-1A4.5 4.5 0 007 4.5c-1.2 0-2.3.5-3.2 1.4l1 1A3.5 3.5 0 017 6zm0 2a1.2 1.2 0 100 2.4A1.2 1.2 0 007 8z" fill={c}/></svg>
-        <div style={{ width: 24, height: 11, border: `1px solid ${c}`, borderRadius: 3, position:'relative', opacity: 0.7 }}>
-          <div style={{ position:'absolute', inset: 1, width: '78%', background: c, borderRadius: 1.5 }} />
-        </div>
-      </div>
-    </div>
-  );
-}
+// Simulated iOS status bar (time/signal/wifi/battery) — disabled for real web/mobile use.
+// Kept as a no-op so existing call sites compile; the OS browser shows the real bar.
+function StatusBar() { return null; }
 window.StatusBar = StatusBar;
 
 // global styles (animations, scrollbar)
@@ -577,6 +565,9 @@ window.StatusBar = StatusBar;
   if (document.getElementById('tc-styles')) return;
   const s = document.createElement('style'); s.id = 'tc-styles';
   s.textContent = `
+    html, body { margin: 0; padding: 0; min-height: 100vh; min-height: 100dvh; background: #EFEBE2; }
+    body { -webkit-font-smoothing: antialiased; overscroll-behavior-y: contain; }
+    #root, .tc-app-shell { min-height: 100vh; min-height: 100dvh; }
     @keyframes tcPush { from { transform: translateX(100%); } to { transform: translateX(0); } }
     @keyframes tcPop  { from { transform: translateX(0); } to { transform: translateX(100%); } }
     @keyframes tcFade { from { opacity: 0 } to { opacity: 1 } }
@@ -586,6 +577,11 @@ window.StatusBar = StatusBar;
     .tc-tap { transition: transform 120ms ease, background 120ms ease; }
     .tc-tap:active { transform: scale(0.97); }
     button { -webkit-tap-highlight-color: transparent; }
+    /* Mobile: drop the desktop column shadow + soft bg, use the device's full viewport */
+    @media (max-width: 520px) {
+      .tc-app-shell-outer { background: #EFEBE2 !important; }
+      .tc-app-shell { box-shadow: none !important; max-width: 100% !important; }
+    }
   `;
   document.head.appendChild(s);
 })();
@@ -1140,8 +1136,12 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
   const p = data.project;
   const pad = d === 'compact' ? 12 : 16;
 
-  const myTasks = p.today.filter(t => t.owner === role.id);
-  const urgent = p.today.filter(t => t.priority === 'high');
+  const todayTasks = p.today || [];
+  const projApprovals = p.approvals || [];
+  const myTasks = todayTasks.filter(t => t.owner === role.id);
+  const urgent = todayTasks.filter(t => t.priority === 'high');
+  const pendingApprovals = projApprovals.filter(a => !a.approvedAt && (a.status || 'pending') === 'pending');
+  const urgentApprovals = projApprovals.filter(a => a.urgent);
 
   return (
     <div style={{ paddingBottom: 110 }}>
@@ -1184,19 +1184,19 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
           </div>
 
           <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15 }}>
-            {role.isLead ? 'มี 3 งานรอ approve' : role.isBoss ? `มี ${window.APP_DATA.project.approvals.filter(a=>a.urgent).length} เรื่องด่วน` : `คุณมี ${myTasks.length} งานวันนี้`}
+            {role.isLead ? `มี ${pendingApprovals.length} งานรอ approve` : role.isBoss ? `มี ${urgentApprovals.length} เรื่องด่วน` : `คุณมี ${myTasks.length} งานวันนี้`}
           </div>
           <div style={{ opacity: 0.7, fontSize: 15, marginTop: 4 }}>
-            Collection {p.code} · เหลือ {p.daysLeft} วันก่อน launch
+            {p.code ? `Collection ${p.code} · เหลือ ${p.daysLeft || 0} วันก่อน launch` : 'ยังไม่มีโปรเจคที่ active'}
           </div>
 
           {/* 4 KPI chips */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 8, marginTop: 20 }}>
             {[
-              { lab:'Progress', val: `${p.progress}%`, sub:'On track' },
-              { lab:'Tasks',    val: p.today.length,   sub:'today' },
-              { lab:'Samples',  val: `${p.samples.ready}/${p.samples.total}`, sub:'ready' },
-              { lab:'Approve',  val: p.approvals.filter(a=>!a.approvedAt).length, sub:'pending' },
+              { lab:'Progress', val: `${p.progress || 0}%`, sub:'On track' },
+              { lab:'Tasks',    val: todayTasks.length, sub:'today' },
+              { lab:'Samples',  val: `${p.samples?.ready ?? 0}/${p.samples?.total ?? 0}`, sub:'ready' },
+              { lab:'Approve',  val: pendingApprovals.length, sub:'pending' },
             ].map(k => (
               <window.Glass key={k.lab} radius={18} tint="rgba(255,255,255,0.16)" border>
                 <div style={{ padding: 10, color:'#fff' }}>
@@ -1211,8 +1211,9 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
       </div>
 
       <div style={{ padding: `18px ${pad}px 0` }}>
-        {/* Active project card */}
-        <window.Card style={{ marginBottom: 18, padding: 16 }} radius={26}>
+        {/* Active project card — only if a project is loaded */}
+        {p.code ? (
+          <window.Card style={{ marginBottom: 18, padding: 16 }} radius={26}>
           <div style={{ display:'flex', alignItems:'flex-start', gap: 14 }}>
             <div style={{
               width: 56, height: 56, borderRadius: 16,
@@ -1224,20 +1225,19 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display:'flex', alignItems:'center', gap: 6, marginBottom: 2 }}>
                 <window.Tag kind="doing" sm>Active</window.Tag>
-                <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· FW26</span>
               </div>
               <div style={{ fontSize: 18, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2 }}>{p.name}</div>
               <div style={{ fontSize: 14, color: window.TC.muted, marginTop: 1 }}>{p.sub}</div>
             </div>
-            <window.Ring pct={p.progress} size={50} stroke={5} color={window.TC.green}>
-              <span style={{ fontSize: 13 }}>{p.progress}%</span>
+            <window.Ring pct={p.progress || 0} size={50} stroke={5} color={window.TC.green}>
+              <span style={{ fontSize: 13 }}>{p.progress || 0}%</span>
             </window.Ring>
           </div>
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: `0.5px solid ${window.TC.hair}`,
                         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
-              <window.AvatarStack ids={p.coreTeam || ['u1','u2','u3','u4','u5','u6','u7']} size={22} />
-              <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· {p.daysLeft} days left</span>
+              <window.AvatarStack ids={(p.coreTeam && p.coreTeam.length ? p.coreTeam : (window.APP_DATA.team || []).map(u => u.id)).slice(0, 7)} size={22} />
+              <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· {p.daysLeft || 0} days left</span>
             </div>
             <button onClick={() => go('project', { id: p.id })} style={{
               background: window.TC.ink, color:'#fff', border:'none', borderRadius: 999,
@@ -1245,16 +1245,29 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
               display:'inline-flex', alignItems:'center', gap: 4,
             }}>Open <span style={{ display:'inline-flex' }}>{window.I.chev}</span></button>
           </div>
-        </window.Card>
+          </window.Card>
+        ) : (
+          <window.Card style={{ marginBottom: 18, padding: 20 }} radius={26}>
+            <div style={{ textAlign:'center', color: window.TC.muted, fontSize: 14, padding: 10 }}>
+              ยังไม่มีโปรเจคที่กำลังทำงานอยู่
+              {role.isLead && (
+                <button onClick={() => go('projects')} style={{
+                  display:'block', margin:'12px auto 0', background: window.TC.green, color:'#fff', border:'none',
+                  borderRadius: 999, padding:'8px 16px', fontSize: 14, fontWeight: 700, cursor:'pointer',
+                }}>เพิ่มโปรเจคใหม่</button>
+              )}
+            </div>
+          </window.Card>
+        )}
 
         {/* Approvals — for Op Lead: pending review by boss. For Boss: act on these. */}
-        {(role.isLead || role.isBoss) && (
+        {(role.isLead || role.isBoss) && projApprovals.length > 0 && (
           <>
             <window.SectionHead title={role.isBoss ? 'รอผมตัดสิน' : 'รอ approve จากเจ้านาย'}
-                                sub={role.isBoss ? `${p.approvals.length} รายการ · ส่งล่าสุด 2 ชม.ที่แล้ว` : `ส่ง ${p.approvals.length} รายการ · ครั้งล่าสุด 2 ชม.ที่แล้ว`}
+                                sub={`${pendingApprovals.length} รอตอบ · ${projApprovals.length} ทั้งหมด`}
                                 right={<window.TextBtn onClick={() => go('approval')}>ดูทั้งหมด</window.TextBtn>} />
             <div style={{ display:'grid', gap: 10, marginBottom: 22 }}>
-              {p.approvals.map(a => (
+              {projApprovals.map(a => (
                 <window.Card key={a.id} pad={14} onClick={() => go('approval')} style={{ cursor:'pointer' }}>
                   <div style={{ display:'flex', alignItems:'flex-start', gap: 10 }}>
                     <div style={{
@@ -1280,7 +1293,7 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
         {/* Today's tasks (for current role) — horizontal scroll, 3 visible */}
         <window.SectionHead
           title={role.isLead ? 'งานวันนี้ของทีม' : role.isBoss ? 'ความคืบหน้าของทีม' : 'งานของฉัน'}
-          sub={`${(role.isLead ? p.today : myTasks).length} รายการ · ${urgent.length} ด่วน`}
+          sub={`${(role.isLead ? todayTasks : myTasks).length} รายการ · ${urgent.length} ด่วน`}
           right={<window.TextBtn onClick={() => go('kanban')}>Board</window.TextBtn>}
         />
         <div className="tc-scroll" style={{
@@ -1288,7 +1301,11 @@ function ScreenHome({ go, role, onNotif, onSearch, openTask }) {
           padding:'2px 4px 4px', margin:'0 -16px 24px', paddingLeft: 16, paddingRight: 16,
           scrollSnapType:'x mandatory',
         }}>
-          {(role.isLead ? p.today : myTasks).map(t => (
+          {(role.isLead ? todayTasks : myTasks).length === 0 ? (
+            <div style={{ flex: 1, padding: 16, textAlign:'center', color: window.TC.muted, fontSize: 14, fontStyle:'italic' }}>
+              ไม่มีงานในวันนี้
+            </div>
+          ) : (role.isLead ? todayTasks : myTasks).map(t => (
             <div key={t.id} style={{ flex:'0 0 78%', maxWidth: 260, scrollSnapAlign:'start' }}>
               <TaskCardH t={t} onClick={() => openTask(t)} />
             </div>
@@ -1387,13 +1404,13 @@ window.TaskCardH = TaskCardH;
 // 2. PROJECTS LIST
 // ─────────────────────────────────────────────────────────
 function ScreenProjects({ go, role, openAdd }) {
-  const p = window.APP_DATA.project;
-  const allProjects = [
-    p,
-    { ...p, id: 'fedfe-c1', name:'Fedfe ทองแท้ไม่กลัวไฟ', sub:'Collection 01 · SS26', progress: 100, daysLeft: 0, code:'FED-C1', cover: '#0E5A3B', _archived: true, _status:'done' },
-    { ...p, id: 'capsule-x', name:'Capsule × คุณภีม',     sub:'Holiday Drop · Dec 2026',     progress: 18,  daysLeft: 124, code:'CAP-PM', cover: '#7A5AE0', _status:'doing' },
-    { ...p, id: 'home-cs',   name:'Home & Scent',         sub:'Lifestyle Sub-line',         progress: 5,   daysLeft: 168, code:'HS-01',  cover: '#D4A24C', _status:'next' },
-  ];
+  // Projects come exclusively from Sheets (APP_DATA.projects).
+  // The `archived` boolean from the projects tab maps to the Archive filter.
+  const allProjects = (window.APP_DATA.projects || []).map(pr => ({
+    ...pr,
+    _archived: pr.archived === true || pr.archived === 'TRUE' || pr.archived === 1,
+    _status: pr.status,
+  }));
   const [filter, setFilter] = useStateM('active');
   const shown = allProjects.filter(x => filter === 'all' ? true : filter === 'active' ? !x._archived : x._archived);
 
@@ -1420,6 +1437,11 @@ function ScreenProjects({ go, role, openAdd }) {
       </div>
 
       <div style={{ padding: '14px 16px', display:'grid', gap: 12 }}>
+        {shown.length === 0 && (
+          <div style={{ padding: 32, textAlign:'center', color: window.TC.muted, fontSize: 14 }}>
+            ยังไม่มีโปรเจค {role.isLead ? '— กดปุ่ม + เพื่อเพิ่ม' : ''}
+          </div>
+        )}
         {shown.map(pr => (
           <button key={pr.id} onClick={() => go('project', { id: pr.id })}
                   className="tc-tap" style={{
@@ -1447,7 +1469,7 @@ function ScreenProjects({ go, role, openAdd }) {
                 </window.Ring>
               </div>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop: 12 }}>
-                <window.AvatarStack ids={['u1','u2','u3','u4','u5']} size={20} />
+                <window.AvatarStack ids={(pr.coreTeam && pr.coreTeam.length ? pr.coreTeam : (window.APP_DATA.team || []).map(u => u.id)).slice(0, 5)} size={20} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: window.TC.muted }}>
                   {pr._archived ? 'launched' : `${pr.daysLeft} d left`}
                 </span>
@@ -1475,8 +1497,18 @@ function darken(hex) {
 // 3. PROJECT DETAIL — timeline + tabs
 // ─────────────────────────────────────────────────────────
 function ScreenProject({ go, role, openAdd, toast, openTask }) {
-  const p = window.APP_DATA.project;
+  const p = window.APP_DATA.project || {};
   const [tab, setTab] = useStateM('phases');
+  if (!p.code) {
+    return (
+      <div style={{ paddingBottom: 110 }}>
+        <window.ScreenHeader title="Project" onBack={() => go('projects')} />
+        <div style={{ padding: 32, textAlign:'center', color: window.TC.muted, fontSize: 14 }}>
+          ยังไม่มีโปรเจคที่กำลังทำงานอยู่ {role.isLead ? '— เปิดหน้า Projects เพื่อเพิ่ม' : ''}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ paddingBottom: 110 }}>
@@ -1500,7 +1532,7 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
         <div style={{ position:'relative', zIndex: 1 }}>
           <div style={{ display:'flex', gap: 8, marginBottom: 8 }}>
             <window.Tag kind="doing" sm>Active</window.Tag>
-            <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.8 }}>{p.code} · FW26</span>
+            <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.8 }}>{p.code}</span>
           </div>
           <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15 }}>{p.name}</div>
           <div style={{ fontSize: 15, opacity: 0.75, marginTop: 4 }}>{p.sub}</div>
@@ -1509,7 +1541,7 @@ function ScreenProject({ go, role, openAdd, toast, openTask }) {
                         borderTop:'0.5px solid rgba(255,255,255,0.2)', paddingTop: 14, paddingBottom: 16 }}>
             <Stat label="Launch"   val={p.launch} />
             <Stat label="Pieces"   val={p.pieces} />
-            <Stat label="Samples"  val={`${p.samples.ready}/${p.samples.total}`} />
+            <Stat label="Samples"  val={`${p.samples?.ready ?? 0}/${p.samples?.total ?? 0}`} />
           </div>
         </div>
 
@@ -1643,15 +1675,16 @@ const LINK_KINDS = {
 window.LINK_KINDS = LINK_KINDS;
 
 function LinksTab({ role }) {
-  const [items, setItems] = React.useState([
-    { id:'l1', kind:'drive',   title:'Final Moodboard FW26',         url:'https://drive.google.com/drive/folders/1aB…fw26',         who:'u2', when:'2 ชม.',     approved:true,  tag:'Shoot' },
-    { id:'l2', kind:'figma',   title:'Lineart v3 — full collection', url:'https://figma.com/file/Xyz…/Fedfe-C2',                   who:'u5', when:'เมื่อวาน', approved:true,  tag:'Design' },
-    { id:'l3', kind:'sheet',   title:'Sample spec + measurement',    url:'https://docs.google.com/spreadsheets/d/1Q…/edit',         who:'u4', when:'3 วัน',     approved:true,  tag:'Sample' },
-    { id:'l4', kind:'doc',     title:'Call sheet — Day 1 บางรัก',     url:'https://docs.google.com/document/d/1Pq…/edit',           who:'u2', when:'4 วัน',     approved:false, tag:'Shoot' },
-    { id:'l5', kind:'pinterest',title:'Reference board — texture',   url:'https://pinterest.com/team-cc/fedfe-c2',                 who:'u2', when:'1 สัปดาห์', approved:true,  tag:'Concept' },
-    { id:'l6', kind:'notion',  title:'Brief — Pre-launch campaign',  url:'https://notion.so/team-cc/Pre-launch-Fedfe-C2-abc',      who:'u3', when:'5 วัน',     approved:false, tag:'Marketing' },
-    { id:'l7', kind:'slide',   title:'Lookbook layout draft',        url:'https://docs.google.com/presentation/d/1Sl…/edit',       who:'u5', when:'2 วัน',     approved:false, tag:'Design' },
-  ]);
+  // Links come exclusively from Sheets (APP_DATA.project.links, hydrated by BACKEND).
+  // Normalize boolean fields that may arrive as strings from the Sheet.
+  const [items, setItems] = React.useState(() => (window.APP_DATA.project.links || []).map(l => ({
+    ...l,
+    approved: l.approved === true || l.approved === 'TRUE' || l.approved === 1,
+    who: l.owner || l.who || '',
+    when: l.createdAt || l.when || '',
+    tag: l.tag || '',
+    kind: l.platform || l.kind || 'url',
+  })));
   const [adding, setAdding] = React.useState(false);
   const [newUrl, setNewUrl] = React.useState('');
   const [newTitle, setNewTitle] = React.useState('');
@@ -1672,8 +1705,15 @@ function LinksTab({ role }) {
 
   const add = () => {
     if (!newUrl.trim()) return;
-    setItems([{ id:'l'+Date.now(), kind: detectKind(newUrl), title: newTitle || domain(newUrl),
-                url: newUrl, who: role.id, when:'now', approved:false, tag:'New' }, ...items]);
+    const id = 'l' + Date.now();
+    const kind = detectKind(newUrl);
+    const title = newTitle || domain(newUrl);
+    const proj = window.APP_DATA.project?.code || '';
+    window.BACKEND?.save?.('links', {
+      id, project: proj, title, url: newUrl, platform: kind, tag: 'New',
+      approved: false, owner: role.id, createdAt: new Date().toISOString(),
+    })?.catch(() => {});
+    setItems([{ id, kind, title, url: newUrl, who: role.id, when:'now', approved:false, tag:'New' }, ...items]);
     setNewUrl(''); setNewTitle(''); setAdding(false);
   };
 
@@ -1824,15 +1864,8 @@ function ScreenKanban({ go, role, openAdd, openTask }) {
     { k:'done',   l:'Done',        color: window.TC.greenDk, soft: window.TC.greenSoft },
   ];
 
-  const tasks = [
-    ...p.today,
-    { id:'k1', t:'Source ผ้ากำมะหยี่ supplier 3', owner:'u4', due:'15 มิ.ย.', status:'doing', priority:'med',  tag:'Sample' },
-    { id:'k2', t:'Concept board – Lookbook scene 2', owner:'u2', due:'17 มิ.ย.', status:'doing', priority:'high', tag:'Shoot' },
-    { id:'k3', t:'จองสตูดิโอ Sukhumvit 31', owner:'u3', due:'14 มิ.ย.', status:'done', priority:'med',  tag:'Shoot' },
-    { id:'k4', t:'ขอราคา graphic outsourced', owner:'u5', due:'16 มิ.ย.', status:'review', priority:'low',  tag:'Marketing' },
-    { id:'k5', t:'Brief: VDO หลังบ้าน 60s', owner:'u6', due:'18 มิ.ย.', status:'todo',  priority:'low',  tag:'VDO' },
-    { id:'k6', t:'จัดทีม QC รอบ pre-launch', owner:'u7', due:'22 มิ.ย.', status:'todo',  priority:'med',  tag:'QC' },
-  ];
+  // Tasks come exclusively from Sheets (APP_DATA.project.today, hydrated by BACKEND).
+  const tasks = p.today || [];
 
   return (
     <div style={{ paddingBottom: 110, height: '100%', display:'flex', flexDirection:'column' }}>
@@ -1980,7 +2013,8 @@ window.ScreenTools = ScreenTools;
 // EQUIPMENT INVENTORY
 // ─────────────────────────────────────────────────────────
 function ScreenEquipment({ go, role, toast, openAdd }) {
-  const items = window.APP_DATA.project.equipment;
+  // Equipment comes exclusively from Sheets (APP_DATA.project.equipment).
+  const items = window.APP_DATA.project.equipment || [];
   const [cat, setCat] = useStateT('All');
   const cats = ['All', ...new Set(items.map(x => x.cat))];
   const shown = cat === 'All' ? items : items.filter(x => x.cat === cat);
@@ -2030,6 +2064,11 @@ function ScreenEquipment({ go, role, toast, openAdd }) {
 
       {/* Equipment grid */}
       <div style={{ padding: '0 16px', display:'grid', gap: 10 }}>
+        {shown.length === 0 && (
+          <div style={{ padding: 24, textAlign:'center', color: window.TC.muted, fontSize: 14, fontStyle:'italic' }}>
+            ยังไม่มี Equipment ในคลัง{role.isLead ? ' — กดปุ่ม + เพื่อเพิ่ม' : ''}
+          </div>
+        )}
         {shown.map(it => {
           const u = it.who ? window.userById(it.who) : null;
           return (
@@ -2266,31 +2305,22 @@ function Select({ value, onChange, options }) {
 // APPROVAL FLOW — chat-like thread
 // ─────────────────────────────────────────────────────────
 function ScreenApproval({ go, role, toast, openAdd }) {
-  const items = [
-    { id:'a1', what:'Final mood board – Lookbook FW26', from:'u2', to:'u1', size:'12 ภาพ', urgent:true, sent:'2 ชม.ที่แล้ว', status:'pending',
-      note:'แนบ moodboard final สำหรับ scene 1-4. ขอ approve เพื่อ brief stylist ภายในวันนี้นะคะพี่',
-      attachments:[
-        { kind:'figma',  title:'Moodboard — scene 1-4',  url:'https://figma.com/file/Xyz…/mood-fw26' },
-        { kind:'drive',  title:'Reference photos (12)',  url:'https://drive.google.com/drive/folders/1aB…' },
-      ] },
-    { id:'a2', what:'Sample รอบ 2 – Trench coat #FE-02-04', from:'u4', to:'u1', size:'3 ตัวอย่าง', urgent:false, sent:'เมื่อวาน', status:'pending',
-      note:'ผ้าเปลี่ยน lot ใหม่ + ปกเสื้อแก้ใหม่ตาม feedback รอบที่แล้ว. โรงงานบางบอนรอ confirm เพื่อตัดเต็มล็อต',
-      attachments:[
-        { kind:'drive',  title:'Sample photos v2',       url:'https://drive.google.com/drive/folders/1tr…' },
-        { kind:'doc',    title:'Spec sheet v2',          url:'https://docs.google.com/document/d/1Pq…/edit' },
-      ] },
-    { id:'a3', what:'งบเช่าสถานที่ – บ้านโบราณ บางรัก', from:'u3', to:'u1', size:'฿24,000', urgent:false, sent:'เมื่อวาน', status:'pending',
-      note:'2 วันเต็ม รวมไฟ + ห้องแต่งตัว. มีตัวสำรอง 2 location หากต้องการ',
-      attachments:[
-        { kind:'sheet',  title:'Quote บางรัก',           url:'https://docs.google.com/spreadsheets/d/1Q…/edit' },
-        { kind:'drive',  title:'Location reference',     url:'https://drive.google.com/drive/folders/1ll…' },
-      ] },
-    { id:'a4', what:'Caption + hashtag – Pre-launch teaser', from:'u5', to:'u1', size:'5 ดราฟท์', urgent:false, sent:'3 วัน', status:'approved',
-      note:'รอบนี้เน้น storytelling แทน promo. approved พร้อมโพสตามแผน 25 มิ.ย.', approvedAt:'24 พ.ค.',
-      attachments:[
-        { kind:'doc',    title:'Caption drafts v3',      url:'https://docs.google.com/document/d/1Ca…/edit' },
-      ] },
-  ];
+  // Approvals come exclusively from Sheets (APP_DATA.project.approvals).
+  // Normalize attachments — Sheet column is a JSON string; React state expects array.
+  const items = (window.APP_DATA.project.approvals || []).map(a => {
+    let atts = a.attachments;
+    if (typeof atts === 'string') {
+      try { atts = JSON.parse(atts); } catch (e) { atts = []; }
+    }
+    return {
+      ...a,
+      to: a.to || (window.APP_DATA.team.find(u => u.isBoss) || {}).id || '',
+      status: a.status || 'pending',
+      note: a.note || '',
+      attachments: Array.isArray(atts) ? atts : [],
+      urgent: a.urgent === true || a.urgent === 'TRUE' || a.urgent === 1,
+    };
+  });
 
   const [openItem, setOpenItem] = useStateT(null);
 
@@ -2312,6 +2342,11 @@ function ScreenApproval({ go, role, toast, openAdd }) {
       />
 
       <div style={{ padding: '4px 16px', display:'grid', gap: 10 }}>
+        {items.length === 0 && (
+          <div style={{ padding: 24, textAlign:'center', color: window.TC.muted, fontSize: 14, fontStyle:'italic' }}>
+            ยังไม่มีรายการรอ approve
+          </div>
+        )}
         {items.map(it => {
           const u = window.userById(it.from);
           const boss = window.userById(it.to);
@@ -2544,9 +2579,9 @@ function ScreenPrePost({ go, role, toast }) {
               flexShrink: 0,
             }}>🧥</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase' }}>FED-C2 · FE-02-04</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1, marginTop: 1 }}>Trench coat ทองแท้ FW26</div>
-              <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>฿4,890 · S, M, L</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: window.TC.muted, letterSpacing: 0.4, textTransform:'uppercase' }}>{proj || '—'}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.1, marginTop: 1 }}>{window.APP_DATA.project?.name || 'ยังไม่มีโปรเจค'}</div>
+              <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 2 }}>{window.APP_DATA.project?.sub || ''}</div>
             </div>
             <window.Ring pct={score} size={48} stroke={5} color={score >= 80 ? window.TC.green : score >= 60 ? window.TC.amber : window.TC.rose}>
               <span style={{ fontSize: 13 }}>{score}%</span>
@@ -3046,28 +3081,12 @@ function ScreenIntegrations({ go, role, toast }) {
           ))}
         </div>
 
-        {/* Activity log */}
-        <window.SectionHead title="Recent activity" />
-        <window.Card pad={0} radius={20} style={{ overflow:'hidden' }}>
-          {[
-            { t:'2 นาที',  m:'POST /approvals', d:'mood board → row 13', ok:true },
-            { t:'5 นาที',  m:'GET /tasks',      d:'project=FED-C2 (38 rows)', ok:true },
-            { t:'12 นาที', m:'POST /notify/line', d:'“Final mood board” → @chardchakaj', ok:true },
-            { t:'1 ชม.',  m:'POST /tasks',     d:'Confirm ผ้าซับใน', ok:true },
-            { t:'3 ชม.',  m:'POST /equipment', d:'GFX100 checkout', ok:true },
-            { t:'เมื่อวาน', m:'GET /links',    d:'(7 rows)', ok:true },
-          ].map((l, i) => (
-            <div key={i} style={{
-              display:'flex', alignItems:'center', gap: 10, padding: '10px 14px',
-              borderTop: i === 0 ? 'none' : `0.5px solid ${window.TC.hair}`,
-              fontSize: 13, fontFamily:'ui-monospace, monospace',
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: 999, background: l.ok ? window.TC.green : window.TC.rose, flexShrink: 0 }} />
-              <span style={{ color: window.TC.muted, width: 56, flexShrink: 0 }}>{l.t}</span>
-              <span style={{ color: window.TC.ink, fontWeight: 700, width: 110, flexShrink: 0, overflow:'hidden', textOverflow:'ellipsis' }}>{l.m}</span>
-              <span style={{ color: window.TC.ink2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex: 1 }}>{l.d}</span>
-            </div>
-          ))}
+        {/* Activity log — live data only; populated from Apps Script `logs` tab once exposed. */}
+        <window.SectionHead title="Recent activity" sub="API calls log จาก Apps Script" />
+        <window.Card pad={16} radius={20}>
+          <div style={{ fontSize: 13, color: window.TC.muted, fontStyle:'italic', textAlign:'center' }}>
+            ดูประวัติการเรียก API ได้ที่ Apps Script Sheet → tab "logs"
+          </div>
         </window.Card>
       </div>
 
@@ -3562,6 +3581,11 @@ function ScreenTeam({ go, role, toast, openAdd }) {
 
       {/* Team list */}
       <div style={{ padding: '0 16px', display:'grid', gap: 10 }}>
+        {team.length === 0 && (
+          <div style={{ padding: 24, textAlign:'center', color: window.TC.muted, fontSize: 14, fontStyle:'italic' }}>
+            ยังไม่มี Core team {canEdit ? '— กดปุ่ม + เพื่อเพิ่ม' : ''}
+          </div>
+        )}
         {team.map(u => (
           <window.Card key={u.id} pad={14} radius={20} onClick={canEdit ? () => setEditing(u) : null} style={{ cursor: canEdit ? 'pointer' : 'default' }}>
             <div style={{ display:'flex', alignItems:'center', gap: 12 }}>
@@ -3659,19 +3683,22 @@ window.TeamMemberForm = TeamMemberForm;
 // NOTIFICATIONS SHEET (bell icon)
 // ─────────────────────────────────────────────────────────
 function NotificationsSheet({ open, onClose, role, go, toast }) {
+  // Notifications come from LINE push messages (handled by LINE OA, not the app).
+  // The Inbox sheet shows in-app reminders derived from open approvals + high-priority tasks.
+  const p = window.APP_DATA.project || {};
+  const team = window.APP_DATA.team || [];
+  const pendingApprovals = (p.approvals || []).filter(a => (a.status || 'pending') === 'pending');
+  const myUrgent = (p.today || []).filter(t => t.priority === 'high' && t.status !== 'done');
   const items = [
-    { id:'n1', who:'u2', icon: window.I.check2, tint: window.TC.amberSoft, fg: '#7A5A12',
-      msg:'มะปราง ส่ง approve "Final mood board" รอคุณตัดสิน', t:'2 ชม.', target:'approval', unread:true },
-    { id:'n2', who:'u4', icon: window.I.flame, tint: window.TC.roseSoft, fg: '#8C1F3A',
-      msg:'task "Confirm ผ้าซับใน" ใกล้เกินกำหนดวันนี้ 17:00', t:'2 ชม.', target:'kanban', unread:true },
-    { id:'n3', who:'u5', icon: window.I.sparkle, tint: window.TC.plumSoft, fg: '#3F2A8C',
-      msg:'เก๋ อัพโหลด lineart v3 ลิงก์ Figma ใหม่', t:'4 ชม.', target:'project', unread:true },
-    { id:'n4', who:'u1', icon: window.I.check, tint: window.TC.greenSoft, fg: window.TC.greenDk,
-      msg:'ฉัตรชกาจ approve "Caption + hashtag" แล้ว — เริ่มโพสได้', t:'เมื่อวาน', target:'approval' },
-    { id:'n5', who:'u7', icon: window.I.camera, tint: window.TC.skySoft, fg: '#1B4F87',
-      msg:'นัท จัดชุด wetplate พร้อม — รอเช็คคิวกล้อง', t:'เมื่อวาน', target:'equipment' },
-    { id:'n6', who:'u3', icon: window.I.calendar, tint: window.TC.greenSoft, fg: window.TC.greenDk,
-      msg:'จองสตูดิโอบางรัก confirm แล้ว — 22-23 มิ.ย.', t:'2 วัน', target:'project' },
+    ...pendingApprovals.map(a => ({
+      id: 'a-' + a.id, who: a.from, icon: window.I.check2, tint: window.TC.amberSoft, fg: '#7A5A12',
+      msg: `${(team.find(u => u.id === a.from)?.name) || 'มีคน'} ส่ง approve "${a.what || ''}"`,
+      t: a.sent || '', target: 'approval', unread: true,
+    })),
+    ...myUrgent.map(t => ({
+      id: 't-' + t.id, who: t.owner, icon: window.I.flame, tint: window.TC.roseSoft, fg: '#8C1F3A',
+      msg: `งานด่วน · ${t.t}`, t: t.due || '', target: 'kanban', unread: true,
+    })),
   ];
   return (
     <window.Sheet open={open} onClose={onClose} title="Notifications" height="82%">
@@ -3680,10 +3707,15 @@ function NotificationsSheet({ open, onClose, role, go, toast }) {
         <window.TextBtn onClick={() => toast('mark all read')}>อ่านแล้วทั้งหมด</window.TextBtn>
       </div>
       <div style={{ display:'grid', gap: 8 }}>
+        {items.length === 0 && (
+          <div style={{ padding: 24, textAlign:'center', color: window.TC.muted, fontSize: 14, fontStyle:'italic' }}>
+            ยังไม่มีการแจ้งเตือน
+          </div>
+        )}
         {items.map(n => {
           const u = window.userById(n.who);
           return (
-            <button key={n.id} onClick={() => { onClose(); if (n.target === 'project') go('project', { id:'fedfe-c2' }); else go(n.target); }}
+            <button key={n.id} onClick={() => { onClose(); if (n.target === 'project') go('project', { id: p.id || '' }); else go(n.target); }}
                     className="tc-tap" style={{
               background: n.unread ? window.TC.card : 'transparent', border:'none', borderRadius: 18, padding: 12,
               display:'flex', alignItems:'flex-start', gap: 12, textAlign:'left', cursor:'pointer',
@@ -3696,7 +3728,7 @@ function NotificationsSheet({ open, onClose, role, go, toast }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, color: window.TC.ink, lineHeight: 1.4, fontWeight: n.unread ? 600 : 500 }}>{n.msg}</div>
                 <div style={{ fontSize: 13, color: window.TC.muted, marginTop: 3, display:'flex', alignItems:'center', gap: 6 }}>
-                  <window.Avatar user={u} size={14} /> {u?.name} · {n.t}
+                  <window.Avatar user={u} size={14} /> {u?.name || ''} · {n.t}
                 </div>
               </div>
               {n.unread && <span style={{ width: 8, height: 8, borderRadius: 999, background: window.TC.green, marginTop: 12, flexShrink: 0 }} />}
@@ -3790,7 +3822,7 @@ function TaskDetailSheet({ open, onClose, task, role, toast }) {
         <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 8, flexWrap:'wrap' }}>
           <window.Tag kind={t.status} sm>{t.tag}</window.Tag>
           {t.priority === 'high' && <span style={{ color: window.TC.rose, display:'inline-flex' }}>{window.I.flame}</span>}
-          <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· FED-C2</span>
+          <span style={{ fontSize: 13, color: window.TC.muted, fontWeight: 600 }}>· {t.project || window.APP_DATA.project?.code || ''}</span>
         </div>
         <div style={{ fontSize: 18, fontWeight: 700, color: window.TC.ink, letterSpacing: -0.2, lineHeight: 1.3 }}>{t.t}</div>
       </window.Card>
@@ -4132,9 +4164,20 @@ function App() {
           </window.TweaksPanel>
         </div>
       ) : (
-        /* ── Production / LINE LIFF mode: full screen, no mockup ── */
-        <div style={{ width:'100%', height:'100vh', overflow:'hidden', position:'relative', background: window.TC.bg }}>
-          {appContent}
+        /* ── Production / LINE LIFF mode: full screen on mobile, centred column on desktop ── */
+        <div className="tc-app-shell-outer" style={{
+          width:'100%', minHeight:'100vh',
+          display:'flex', justifyContent:'center', alignItems:'stretch',
+          background:'linear-gradient(180deg, #EFEBE2 0%, #E3DCC9 100%)',
+        }}>
+          <div className="tc-app-shell" style={{
+            width:'100%', maxWidth: 520,
+            height:'100dvh', position:'relative', overflow:'hidden',
+            background: window.TC.bg,
+            boxShadow:'0 0 0 1px rgba(27,26,23,0.04), 0 20px 80px rgba(27,26,23,0.12)',
+          }}>
+            {appContent}
+          </div>
         </div>
       )}
     </window.DensityCtx.Provider>
